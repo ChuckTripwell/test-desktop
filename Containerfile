@@ -1,40 +1,54 @@
-# Allow build scripts to be referenced without being copied into the final image
-FROM scratch AS ctx
-COPY build_files /
+##################################################################################################################################################
+### :::::: pull cachyos :::::: ###
+##################################################################################################################################################
+FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 
-# Base Image
-FROM ghcr.io/ublue-os/bazzite:stable
+# :::::: prepare the kernel :::::: 
+RUN rm -rf /lib/modules/*
+RUN pacman -Sy --noconfirm
+RUN pacman -S --noconfirm linux-cachyos-nvidia-open
 
-## Other possible base images include:
-# FROM ghcr.io/ublue-os/bazzite:latest
-# FROM ghcr.io/ublue-os/bluefin-nvidia:stable
-# 
-# ... and so on, here are more base images
-# Universal Blue Images: https://github.com/orgs/ublue-os/packages
-# Fedora base image: quay.io/fedora/fedora-bootc:41
-# CentOS base images: quay.io/centos-bootc/centos-bootc:stream10
 
-### [IM]MUTABLE /opt
-## Some bootable images, like Fedora, have /opt symlinked to /var/opt, in order to
-## make it mutable/writable for users. However, some packages write files to this directory,
-## thus its contents might be wiped out when bootc deploys an image, making it troublesome for
-## some packages. Eg, google-chrome, docker-desktop.
-##
-## Uncomment the following line if one desires to make /opt immutable and be able to be used
-## by the package manager.
+##################################################################################################################################################
+### :::::: pull ublue-os :::::: ###
+##################################################################################################################################################
+FROM ghcr.io/ublue-os/bazzite-nvidia-open:latest
 
-# RUN rm /opt && mkdir /opt
+# :::::: disable countme ( we always disable it anyway, so this  is to save us time. you can enable it if you want... ) :::::: 
+RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
 
-### MODIFICATIONS
-## make modifications desired in your image and install packages by modifying the build.sh script
-## the following RUN directive does all the things required to run "build.sh" as recommended.
+# :::::: force distrobox to use a sub-directory for home :::::: 
+RUN mkdir -p /usr/share/distrobox/
+RUN touch /usr/share/distrobox/distrobox.conf
+RUN echo "DBX_CONTAINER_HOME_PREFIX=$HOME/distrobox" >> /usr/share/distrobox/distrobox.conf
 
-RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=cache,dst=/var/cache \
-    --mount=type=cache,dst=/var/log \
-    --mount=type=tmpfs,dst=/tmp \
-    /ctx/build.sh
-    
-### LINTING
-## Verify final image and contents are correct.
+# :::::: forcefully remove and replace kernel :::::: 
+RUN rm -rf /lib/modules
+COPY --from=cachyos /lib/modules /lib/modules
+COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
+
+# :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
+RUN dnf5 -y install rpmdevtools akmods
+
+# :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
+# :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
+RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
+
+# :::::: install preformence-related stuff :::::: 
+RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
+RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
+RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
+
+# :::::: install additional stuff :::::: 
+RUN dnf5 -y install python3-pygame
+
+# :::::: slot the kernel into place :::::: 
+RUN mkdir -p /var/tmp
+ENV DRACUT_NO_XATTR=1
+RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
+      printf 'hostonly=no\nadd_dracutmodules+=" ostree bootc "' | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-bootc-modules.conf && \
+      sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
+      dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
+
+#  :::::: finish :::::: 
 RUN bootc container lint
