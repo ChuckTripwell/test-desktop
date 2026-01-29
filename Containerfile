@@ -42,6 +42,45 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install python3-pygame
 
+##################################################################################################################################################
+### :::::: fixes :::::: ###
+##################################################################################################################################################
+
+# :::::: audio fix ::::::
+
+RUN printf "[Unit]\n\
+Description=ALSA restore watchdog\n\
+After=multi-user.target\n\n\
+[Service]\n\
+Type=simple\n\
+ExecStart=/usr/bin/alsactl init\n\
+Restart=on-failure\n\
+RestartSec=10\n\
+StartLimitBurst=5\n\
+StartLimitIntervalSec=60\n\
+User=root\n\n\
+[Install]\n\
+WantedBy=multi-user.target\n" > /etc/systemd/system/alsactl-start.service
+
+#RUN systemctl enable alsactl-start.service
+
+RUN printf "[Unit]\n\
+Description=Run alsactl init on volume key press\n\
+After=multi-user.target\n\n\
+\[Service]\n\
+Type=simple\n\
+ExecStart=/bin/sh -c \"/usr/bin/libinput debug-events --device /dev/input/event5 | /usr/bin/awk '/KEY_VOLUME(UP|DOWN).*pressed/ { system(\\\"/usr/bin/alsactl init\\\") }'\"\n\
+Restart=always\n\
+User=root\n\n\
+\[Install]\n\
+WantedBy=multi-user.target\n" > /etc/systemd/system/alsactl-fix.service
+
+RUN systemctl enable alsactl-fix.service
+
+##################################################################################################################################################
+### :::::: fixes end here :::::: ###
+##################################################################################################################################################
+
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
 ENV DRACUT_NO_XATTR=1
