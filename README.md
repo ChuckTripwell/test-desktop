@@ -2,7 +2,7 @@
 - NOTE2: rebasing to this is NOT recommended. you have been warned.
 
 # Frankengold Linux
-::: you did WHAT?!?! :::
+[:::] you did WHAT?!?! [:::]
 
 - What is this?
   bazzite-nvidia image but with an archlinux kernel optimized for gaming.
