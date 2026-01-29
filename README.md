@@ -4,26 +4,40 @@
 # Frankengold Linux
 [:+:] you did WHAT?!?! [:+:]
 
-- What is this?
-  ```bazzite-nvidia image but with an archlinux kernel optimized for gaming.  ```
+- What is this? \n\
+  ```
+  bazzite-nvidia image but with an archlinux kernel optimized for gaming.
+  ```
 
-- Is it safe?
-  ```probably not.  ```
+- Is it safe? \n\
+  ```
+  probably not.
+  ```
 
-- Then, why?
-  ```in theory: the speed of cachyos, the stability of bazzite.
-  in practice: It's my device, I'll do what I want with it.  ```
+- Then, why? \n\
+  ```
+  in theory: the speed of cachyos, the stability of bazzite.
+  in practice: It's my device, I'll do what I want with it.
+  ```
 
-- Can you add this feature...?
-  ```no.  ```
+- Can you add this feature...? \n\
+  ```
+  no.
+  ```
 
-- Can I create my own version?
-  ```yes.
+- Can I create my own version? \n\
+  ```
+  yes.
   all changes I made are in the Containerfile. go nuts.
-  I will not provide ANY help. you are on your own.  ```
+  I will not provide ANY help. you are on your own.
+  ```
 
-- I found a bug!
-  ```here's a cookie.  ```
+- I found a bug! \n\
+  ```
+  here's a cookie.
+  ```
 
-- I'm using this and experiencing no issues whatsoever, this is actually very smooth.
-  ```cheers!  ```
+- I'm using this and experiencing no issues whatsoever, this is actually very smooth. \n\
+  ```
+  cheers!
+  ```
