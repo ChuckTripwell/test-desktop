@@ -1,4 +1,4 @@
-- NOTE: using this image will slightly change how ostree and grub works. there is no way to rebase back to bazzite. please backup your stuff.
+- NOTE: using this image will slightly change how ostree and grub works, so there is no way to rebase back to bazzite. please backup your stuff.
 - NOTE2: rebasing to this is NOT recommended. you have been warned.
 
 # Frankengold Linux
