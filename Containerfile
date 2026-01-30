@@ -47,10 +47,7 @@ RUN dnf5 -y install python3-pygame
 ##################################################################################################################################################
 
 # experimental millennium support
-RUN bash -c 'id(){ echo 1000; }; export -f id; \
-curl -fsSL https://steambrew.app/install.sh -o /tmp/install.sh; \
-sed -i "/:: Proceed with installation? \[Y\/n\]/d" /tmp/install.sh; \
-bash /tmp/install.sh'
+#RUN bash -c 'id(){ echo 1000; }; export -f id; curl -fsSL https://steambrew.app/install.sh -o /tmp/install.sh; sed -i "/:: Proceed with installation? \[Y\/n\]/d" /tmp/install.sh; bash /tmp/install.sh'
 
 # :::::: audio fix ::::::
 
