@@ -33,6 +33,8 @@ RUN dnf5 -y install rpmdevtools akmods
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
 RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
+RUN echo "vm.swappiness=10" >> /etc/sysctl.conf
+RUN echo "kernel.sched_migration_cost_ns=5000000" >> /etc/sysctl.conf
 
 # :::::: install preformence-related stuff :::::: 
 RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
