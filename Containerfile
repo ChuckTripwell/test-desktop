@@ -49,8 +49,8 @@ RUN dnf5 -y install python3-pygame
 ##################################################################################################################################################
 
 # :::::: install sbctl to sign some keys later..? ::::::
-RUN dnf5 copr enable chenxiaolong/sbctl
-RUN dnf5 install sbctl
+RUN dnf5 -y copr enable chenxiaolong/sbctl
+RUN dnf5 -y install sbctl
 
 
 # :::::: experimental millennium support :::::: 
