@@ -56,37 +56,6 @@ RUN dnf5 -y install sbctl
 # :::::: experimental millennium support :::::: 
 #RUN bash -c 'id(){ echo 1000; }; export -f id; curl -fsSL https://steambrew.app/install.sh -o /tmp/install.sh; sed -i "/:: Proceed with installation? \[Y\/n\]/d" /tmp/install.sh; bash /tmp/install.sh'
 
-# :::::: audio fix ::::::
-
-RUN printf "[Unit]\n\
-Description=ALSA restore watchdog\n\
-After=multi-user.target\n\n\
-[Service]\n\
-Type=simple\n\
-ExecStart=/usr/bin/alsactl init\n\
-Restart=on-failure\n\
-RestartSec=10\n\
-StartLimitBurst=5\n\
-StartLimitIntervalSec=60\n\
-User=root\n\n\
-[Install]\n\
-WantedBy=multi-user.target\n" > /etc/systemd/system/alsactl-start.service
-
-#RUN systemctl enable alsactl-start.service
-
-RUN printf "[Unit]\n\
-Description=Run alsactl init on volume key press\n\
-After=multi-user.target\n\n\
-\[Service]\n\
-Type=simple\n\
-ExecStart=/bin/sh -c \"/usr/bin/libinput debug-events --device /dev/input/event5 | /usr/bin/awk '/KEY_VOLUME(UP|DOWN).*pressed/ { system(\\\"/usr/bin/alsactl init\\\") }'\"\n\
-Restart=always\n\
-User=root\n\n\
-\[Install]\n\
-WantedBy=multi-user.target\n" > /etc/systemd/system/alsactl-fix.service
-
-RUN systemctl enable alsactl-fix.service
-
 # test for grub signing
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
