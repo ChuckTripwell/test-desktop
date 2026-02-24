@@ -186,3 +186,12 @@ jobs:
           TAGS: ${{ steps.push.outputs.digest }}
           COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+      
+      - name: Sign kernel
+        uses: EyeCantCU/kernel-signer@v0.1.0
+        with:
+          image: kernel-signer-test
+          privkey: ${{ secrets.PRIVKEY }}
+          pubkey: https://raw.githubusercontent.com/ChuckTripwell/Frankengold-Desktop/refs/heads/main/kernel/cosign.pub
+          tags: |
+            latest
