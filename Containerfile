@@ -20,7 +20,7 @@ RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask -
 # :::::: force distrobox to use a sub-directory for home :::::: 
 RUN mkdir -p /usr/share/distrobox/
 RUN touch /usr/share/distrobox/distrobox.conf
-RUN echo "DBX_CONTAINER_HOME_PREFIX=$HOME/distrobox" >> /usr/share/distrobox/distrobox.conf
+RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
 
 # :::::: forcefully remove and replace kernel :::::: 
 RUN rm -rf /lib/modules
