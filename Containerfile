@@ -59,6 +59,20 @@ RUN dnf5 -y install sbctl
 # test for grub signing
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
+# attempt to sign kernel after each update
+RUN dnf install -y sbctl
+
+RUN mkdir -p /usr/lib/ostree/post.d && \
+    tee /usr/lib/ostree/post.d/90-enroll-keys.sh > /dev/null <<'EOF'
+#!/usr/bin/bash
+set -euo pipefail
+
+sbctl enroll-keys --microsoft
+EOF
+
+RUN chmod +x /usr/lib/ostree/post.d/90-enroll-keys.sh
+
+
 ##################################################################################################################################################
 ### :::::: fixes end here :::::: ###
 ##################################################################################################################################################
@@ -77,5 +91,3 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 #  :::::: finish :::::: 
 ENV DRACUT_NO_XATTR=1
 RUN bootc container lint
-
-RUN bootc container finalize --post="sbctl enroll-keys --microsoft"
