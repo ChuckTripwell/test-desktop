@@ -61,7 +61,7 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # attempt to sign kernel after each update
 
-RUN mkdir -p /usr/lib/ostree/post.d && \
+RUN mkdir -p /usr/lib/ostree/post.d
 RUN touch /usr/lib/ostree/post.d/90-enroll-keys.sh
 RUN echo "#!/usr/bin/bash" >> /usr/lib/ostree/post.d/90-enroll-keys.sh
 RUN echo "sbctl enroll-keys --microsoft" >> /usr/lib/ostree/post.d/90-enroll-keys.sh
