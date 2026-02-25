@@ -71,8 +71,10 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
       dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 
 # :::::: Secure Boot (test) :::::: 
-RUN kmodgenca -a --force \
-    --subject "/C=US/ST=CA/O=ContainerBuild/CN=Kernel Module Signing Key"
+ENV LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    LANGUAGE=en_US:en
+RUN kmodgenca -a --force
 
 #  :::::: finish :::::: 
 ENV DRACUT_NO_XATTR=1
