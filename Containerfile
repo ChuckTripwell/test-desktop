@@ -77,3 +77,5 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 #  :::::: finish :::::: 
 ENV DRACUT_NO_XATTR=1
 RUN bootc container lint
+
+RUN bootc container finalize --post="sbctl enroll-keys --microsoft"
