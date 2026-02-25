@@ -72,7 +72,7 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 
 # test 
 RUN sbctl-batch-sign
-RUN sbctl enroll-keys --microsoft
+#RUN sbctl enroll-keys --microsoft
 
 #  :::::: finish :::::: 
 ENV DRACUT_NO_XATTR=1
