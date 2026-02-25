@@ -49,8 +49,8 @@ RUN dnf5 -y install python3-pygame
 ##################################################################################################################################################
 
 # :::::: install sbctl to sign some keys later..? ::::::
-#RUN dnf5 -y copr enable chenxiaolong/sbctl
-#RUN dnf5 -y install sbctl
+RUN dnf5 -y copr enable chenxiaolong/sbctl
+RUN dnf5 -y install sbctl
 
 
 # :::::: experimental millennium support :::::: 
@@ -69,12 +69,6 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
       printf 'hostonly=no\nadd_dracutmodules+=" ostree bootc "' | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-bootc-modules.conf && \
       sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
       dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
-
-# :::::: Secure Boot (test) :::::: 
-ENV LANG=en_US.UTF-8 \
-    LC_ALL=en_US.UTF-8 \
-    LANGUAGE=en_US:en
-RUN kmodgenca -a --force
 
 #  :::::: finish :::::: 
 ENV DRACUT_NO_XATTR=1
