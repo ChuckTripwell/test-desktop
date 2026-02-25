@@ -71,7 +71,7 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
       dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 
 # test 
-RUN sbctl-batch-sign
+#RUN sbctl-batch-sign
 #RUN sbctl enroll-keys --microsoft
 
 #  :::::: finish :::::: 
