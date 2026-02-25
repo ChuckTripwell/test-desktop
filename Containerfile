@@ -71,7 +71,7 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
       dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 
 # :::::: Secure Boot (test) :::::: 
-RUN kmodgenca -a
+RUN kmodgenca -a --force
 
 #  :::::: finish :::::: 
 ENV DRACUT_NO_XATTR=1
