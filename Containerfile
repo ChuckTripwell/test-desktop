@@ -70,19 +70,8 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
       sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
       dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 
-# :::::: generate a new Secure Boot keypair :::::: 
-RUN mkdir -p /tmp/secureboot && \
-    openssl req -new -x509 \
-        -newkey rsa:4096 -nodes \
-        -days 3650 \
-        -subj "/CN=Custom Secure Boot Key/" \
-        -keyout /tmp/secureboot/db.key \
-        -out /tmp/secureboot/db.crt && \
-    openssl x509 -in /tmp/secureboot/db.crt \
-        -outform DER -out /tmp/secureboot/db.der
-
-# :::::: overwrite the distro Secure Boot public key :::::: 
-RUN mv /tmp/secureboot/db.der /etc/pki/akmods/certs/akmods-ublue.der
+# :::::: Secure Boot (test) :::::: 
+RUN kmodgenca -a
 
 #  :::::: finish :::::: 
 ENV DRACUT_NO_XATTR=1
