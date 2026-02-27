@@ -119,16 +119,30 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 
 
 
-# Initialize sbctl keys (idempotent)
-RUN sbctl create-keys \
-    && sbctl enroll-keys -m
+# Initialize sbctl keys
+RUN sbctl create-keys
 
 # Automatically sign all kernel files in /usr/lib/modules
 RUN for k in /usr/lib/modules/*/vmlinuz; do \
         sbctl sign -s "$k"; \
     done
 
+# Create the systemd service for one-shot enrollment + lock
+RUN mkdir -p /etc/systemd/system \
+ && echo "[Unit]" >> /etc/systemd/system/sbctl-enroll.service \
+ && echo "Description=Enroll sbctl Secure Boot keys and relock bootloader once" >> /etc/systemd/system/sbctl-enroll.service \
+ && echo "After=local-fs.target" >> /etc/systemd/system/sbctl-enroll.service \
+ && echo "Wants=network-online.target" >> /etc/systemd/system/sbctl-enroll.service \
+ && echo "Before=multi-user.target" >> /etc/systemd/system/sbctl-enroll.service \
+ && echo "[Service]" >> /etc/systemd/system/sbctl-enroll.service \
+ && echo "Type=oneshot" >> /etc/systemd/system/sbctl-enroll.service \
+ && echo "RemainAfterExit=yes" >> /etc/systemd/system/sbctl-enroll.service \
+ && echo "ExecStart=/bin/sh -c 'sbctl enroll-keys && sbctl lock'" >> /etc/systemd/system/sbctl-enroll.service \
+ && echo "[Install]" >> /etc/systemd/system/sbctl-enroll.service \
+ && echo "WantedBy=multi-user.target" >> /etc/systemd/system/sbctl-enroll.service
 
+# Enable the service
+RUN systemctl enable sbctl-enroll.service
 
 
 
