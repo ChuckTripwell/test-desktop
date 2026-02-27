@@ -79,7 +79,7 @@ RUN sbctl create-keys || true
 
 # Sign existing kernel binaries..? 
 RUN sbctl sign -s /usr/lib/modules/*/vmlinuz
-RUN sbctl sign -s /usr/lib/modules/*/initramfs.img
+RUN sbctl sign -s /usr/lib/modules/*/initramfs*.img
 
 
 
