@@ -61,12 +61,61 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # attempt to sign kernel after each update
 
-RUN mkdir -p /usr/lib/ostree/post.d
-RUN touch /usr/lib/ostree/post.d/90-enroll-keys.sh
-RUN echo "#!/usr/bin/bash" >> /usr/lib/ostree/post.d/90-enroll-keys.sh
-RUN echo "sbctl enroll-keys --microsoft" >> /usr/lib/ostree/post.d/90-enroll-keys.sh
+# Create the enroll script
+RUN mkdir -p /usr/local/sbin && \
+    cat > /usr/local/sbin/enroll-sbctl.sh <<'EOF' && chmod +x /usr/local/sbin/enroll-sbctl.sh
+#!/usr/bin/env bash
+# enroll-sbctl.sh
+# Create SBCTL keys if missing, then enroll Microsoft keys on new deployment
 
-RUN chmod +x /usr/lib/ostree/post.d/90-enroll-keys.sh
+STAMP_FILE="/var/lib/sbctl/enrolled"
+LAST_DEPLOYMENT_FILE="/var/lib/sbctl/last_deployment"
+KEYS_DIR="/etc/secureboot/keys"
+
+mkdir -p "$(dirname "$STAMP_FILE")"
+
+# 1. Create keys if they don't exist
+if [ ! -d "$KEYS_DIR" ] || [ -z "$(ls -A $KEYS_DIR 2>/dev/null)" ]; then
+    echo "Creating SBCTL keys..."
+    sbctl create-keys
+fi
+
+# 2. Determine current deployment checksum (side-B detection)
+CURRENT_DEPLOYMENT=$(ostree admin status | awk '/^\*/{getline; print $1}')
+
+# 3. Read last deployment checksum if exists
+if [ -f "$LAST_DEPLOYMENT_FILE" ]; then
+    LAST_DEPLOYMENT=$(cat "$LAST_DEPLOYMENT_FILE")
+else
+    LAST_DEPLOYMENT=""
+fi
+
+# 4. Run enroll only if this is a new deployment
+if [ "$CURRENT_DEPLOYMENT" != "$LAST_DEPLOYMENT" ] && [ ! -f "$STAMP_FILE" ]; then
+    echo "Enrolling Microsoft Secure Boot keys..."
+    sbctl enroll-keys --microsoft
+    echo "$CURRENT_DEPLOYMENT" > "$LAST_DEPLOYMENT_FILE"
+    touch "$STAMP_FILE"
+fi
+EOF
+
+# Create systemd service inside Dockerfile
+RUN cat > /etc/systemd/system/sbctl-enroll.service <<'EOF'
+[Unit]
+Description=Enroll Secure Boot keys only on new OSTree deployment
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/enroll-sbctl.sh
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Enable service
+RUN systemctl enable sbctl-enroll.service
 
 
 ##################################################################################################################################################
