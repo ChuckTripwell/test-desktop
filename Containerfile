@@ -61,43 +61,45 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # attempt to sign kernel after each update
 
-# Create the enroll script
+FROM registry.fedoraproject.org/fedora:38
+
+# Install sbctl, systemd, ostree
+RUN dnf install -y sbctl systemd ostree && dnf clean all
+
+# Create the enroll script safely (echo shebang first)
 RUN mkdir -p /usr/local/sbin && \
-    cat > /usr/local/sbin/enroll-sbctl.sh <<'EOF' && chmod +x /usr/local/sbin/enroll-sbctl.sh
-#!/usr/bin/env bash
-# enroll-sbctl.sh
-# Create SBCTL keys if missing, then enroll Microsoft keys on new deployment
-
-STAMP_FILE="/var/lib/sbctl/enrolled"
-LAST_DEPLOYMENT_FILE="/var/lib/sbctl/last_deployment"
-KEYS_DIR="/etc/secureboot/keys"
-
-mkdir -p "$(dirname "$STAMP_FILE")"
-
-# 1. Create keys if they don't exist
-if [ ! -d "$KEYS_DIR" ] || [ -z "$(ls -A $KEYS_DIR 2>/dev/null)" ]; then
-    echo "Creating SBCTL keys..."
-    sbctl create-keys
-fi
-
-# 2. Determine current deployment checksum (side-B detection)
-CURRENT_DEPLOYMENT=$(ostree admin status | awk '/^\*/{getline; print $1}')
-
-# 3. Read last deployment checksum if exists
-if [ -f "$LAST_DEPLOYMENT_FILE" ]; then
-    LAST_DEPLOYMENT=$(cat "$LAST_DEPLOYMENT_FILE")
-else
-    LAST_DEPLOYMENT=""
-fi
-
-# 4. Run enroll only if this is a new deployment
-if [ "$CURRENT_DEPLOYMENT" != "$LAST_DEPLOYMENT" ] && [ ! -f "$STAMP_FILE" ]; then
-    echo "Enrolling Microsoft Secure Boot keys..."
-    sbctl enroll-keys --microsoft
-    echo "$CURRENT_DEPLOYMENT" > "$LAST_DEPLOYMENT_FILE"
-    touch "$STAMP_FILE"
-fi
-EOF
+    echo "#!/usr/bin/env bash" > /usr/local/sbin/enroll-sbctl.sh && \
+    echo "" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "# enroll-sbctl.sh: Create SBCTL keys if missing, then enroll Microsoft keys on new deployment" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "STAMP_FILE=\"/var/lib/sbctl/enrolled\"" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "LAST_DEPLOYMENT_FILE=\"/var/lib/sbctl/last_deployment\"" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "KEYS_DIR=\"/etc/secureboot/keys\"" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "mkdir -p \"\$(dirname \"\$STAMP_FILE\")\"" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "# 1. Create keys if they don't exist" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "if [ ! -d \"\$KEYS_DIR\" ] || [ -z \"\$(ls -A \$KEYS_DIR 2>/dev/null)\" ]; then" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "    echo \"Creating SBCTL keys...\"" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "    sbctl create-keys" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "fi" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "# 2. Determine current deployment checksum (side-B detection)" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "CURRENT_DEPLOYMENT=\$(ostree admin status | awk '/^\\*/{getline; print \$1}')" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "# 3. Read last deployment checksum if exists" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "if [ -f \"\$LAST_DEPLOYMENT_FILE\" ]; then" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "    LAST_DEPLOYMENT=\$(cat \"\$LAST_DEPLOYMENT_FILE\")" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "else" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "    LAST_DEPLOYMENT=\"\"" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "fi" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "# 4. Run enroll only if this is a new deployment" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "if [ \"\$CURRENT_DEPLOYMENT\" != \"\$LAST_DEPLOYMENT\" ] && [ ! -f \"\$STAMP_FILE\" ]; then" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "    echo \"Enrolling Microsoft Secure Boot keys...\"" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "    sbctl enroll-keys --microsoft" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "    echo \"\$CURRENT_DEPLOYMENT\" > \"\$LAST_DEPLOYMENT_FILE\"" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "    touch \"\$STAMP_FILE\"" >> /usr/local/sbin/enroll-sbctl.sh && \
+    echo "fi" >> /usr/local/sbin/enroll-sbctl.sh && \
+    chmod +x /usr/local/sbin/enroll-sbctl.sh
 
 # Create systemd service inside Dockerfile
 RUN cat > /etc/systemd/system/sbctl-enroll.service <<'EOF'
