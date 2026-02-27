@@ -70,10 +70,10 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 RUN echo "#!/usr/bin/env bash" > /usr/local/sbin/sign-sideb.sh && \
-    echo "DEPLOY_PATH=$(ostree admin status | awk \"/pending deployment/{print \$3}\")" >> /usr/local/sbin/sign-sideb.sh && \
-    echo "if [ -n \"$DEPLOY_PATH\" ]; then" >> /usr/local/sbin/sign-sideb.sh && \
-    echo "    sbctl sign \"$DEPLOY_PATH\"/boot/vmlinuz* || true" >> /usr/local/sbin/sign-sideb.sh && \
-    echo "    sbctl sign \"$DEPLOY_PATH\"/usr/lib/modules/* || true" >> /usr/local/sbin/sign-sideb.sh && \
+    echo "DEPLOY_PATH=\$(ostree admin status | awk \"/pending deployment/{print \$3}\")" >> /usr/local/sbin/sign-sideb.sh && \
+    echo "if [ -n \"\$DEPLOY_PATH\" ]; then" >> /usr/local/sbin/sign-sideb.sh && \
+    echo "    sbctl sign \"\$DEPLOY_PATH\"/boot/vmlinuz* || true" >> /usr/local/sbin/sign-sideb.sh && \
+    echo "    sbctl sign \"\$DEPLOY_PATH\"/usr/lib/modules/* || true" >> /usr/local/sbin/sign-sideb.sh && \
     echo "fi" >> /usr/local/sbin/sign-sideb.sh && \
     chmod +x /usr/local/sbin/sign-sideb.sh
 
