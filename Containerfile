@@ -75,21 +75,50 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
-# Set paths to Bazzite keys (adjust if different in your fork)
-ENV BAZZITE_KEY=/opt/bazzite/keys/bazzite_key.pem
-ENV BAZZITE_CERT=/opt/bazzite/keys/bazzite_cert.pem
 
-# Sign the kernel image
-RUN sbsign --key $BAZZITE_KEY --cert $BAZZITE_CERT \
-    --output /usr/src/vmlinuz-custom.signed /usr/src/vmlinuz-custom
+# Prepare output directory for scripts and systemd unit
+RUN mkdir -p /output
 
-# Sign all kernel modules in place
-RUN find /usr/src/modules -type f -name '*.ko' | while read module; do \
-        /opt/bazzite/tools/kmodsign sha512 $BAZZITE_KEY $BAZZITE_CERT "$module" "$module"; \
-    done
+# One-time host systemd service to initialize and enroll sbctl key
+RUN echo '[Unit]' > /output/sbctl-init.service && \
+    echo 'Description=One-time sbctl key enrollment for Secure Boot' >> /output/sbctl-init.service && \
+    echo 'After=network.target' >> /output/sbctl-init.service && \
+    echo '[Service]' >> /output/sbctl-init.service && \
+    echo 'Type=oneshot' >> /output/sbctl-init.service && \
+    echo 'ExecStart=/usr/local/bin/init_sbctl.sh' >> /output/sbctl-init.service && \
+    echo 'RemainAfterExit=yes' >> /output/sbctl-init.service && \
+    echo '[Install]' >> /output/sbctl-init.service && \
+    echo 'WantedBy=multi-user.target' >> /output/sbctl-init.service
 
-# Optional: verify kernel signature
-RUN sbsigntool verify /usr/src/vmlinuz-custom.signed
+# Host init script called by the above systemd service
+RUN echo '#!/bin/bash' > /output/init_sbctl.sh && \
+    echo 'set -e' >> /output/init_sbctl.sh && \
+    echo 'if [ ! -d "$HOME/.sbctl" ]; then' >> /output/init_sbctl.sh && \
+    echo '    echo "Initializing sbctl keys..."' >> /output/init_sbctl.sh && \
+    echo '    sudo sbctl init' >> /output/init_sbctl.sh && \
+    echo 'fi' >> /output/init_sbctl.sh && \
+    echo 'if ! mokutil --list-enrolled | grep -q "sbctl"; then' >> /output/init_sbctl.sh && \
+    echo '    echo "Enrolling sbctl keys..."' >> /output/init_sbctl.sh && \
+    echo '    sudo sbctl enroll-keys' >> /output/init_sbctl.sh && \
+    echo '    echo "Reboot required to complete enrollment."' >> /output/init_sbctl.sh && \
+    echo 'else' >> /output/init_sbctl.sh && \
+    echo '    echo "Keys already enrolled."' >> /output/init_sbctl.sh
+
+RUN chmod +x /output/init_sbctl.sh
+
+# Sign current kernel and modules at build time
+RUN sbctl sign --kver $(uname -r)
+
+# Post-upgrade signing hook for future kernels
+RUN echo '#!/bin/bash' > /output/post_upgrade_sign.sh && \
+    echo 'set -e' >> /output/post_upgrade_sign.sh && \
+    echo 'KVER=$(uname -r)' >> /output/post_upgrade_sign.sh && \
+    echo 'sbctl sign --kver "$KVER"' >> /output/post_upgrade_sign.sh && \
+    echo 'sbctl verify --kver "$KVER"' >> /output/post_upgrade_sign.sh
+
+RUN chmod +x /output/post_upgrade_sign.sh
+
+
 
 
 
