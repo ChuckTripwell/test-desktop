@@ -69,7 +69,10 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
-RUN echo "#!/usr/bin/env bash" > /usr/local/sbin/sign-sideb.sh && \
+
+
+RUN mkdir -p /usr/local/sbin && \
+    echo "#!/usr/bin/env bash" > /usr/local/sbin/sign-sideb.sh && \
     echo "DEPLOY_PATH=\$(ostree admin status | awk \"/pending deployment/{print \$3}\")" >> /usr/local/sbin/sign-sideb.sh && \
     echo "if [ -n \"\$DEPLOY_PATH\" ]; then" >> /usr/local/sbin/sign-sideb.sh && \
     echo "    sbctl sign \"\$DEPLOY_PATH\"/boot/vmlinuz* || true" >> /usr/local/sbin/sign-sideb.sh && \
@@ -88,7 +91,11 @@ RUN echo "[Unit]" > /etc/systemd/system/sign-sideb.service && \
     echo "" >> /etc/systemd/system/sign-sideb.service && \
     echo "[Install]" >> /etc/systemd/system/sign-sideb.service && \
     echo "WantedBy=ostree-post-transaction.target" >> /etc/systemd/system/sign-sideb.service && \
+    chmod 664 /etc/systemd/system/sign-sideb.service && \
     systemctl enable sign-sideb.service
+
+
+
 
 
 
