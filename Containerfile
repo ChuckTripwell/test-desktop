@@ -74,12 +74,23 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
-# Ensure keys exist
-RUN sbctl create-keys || true
 
-# Sign existing kernel binaries..? 
-RUN sbctl sign -s /usr/lib/modules/*/vmlinuz
-RUN sbctl sign -s /usr/lib/modules/*/initramfs*.img
+# Set paths to Bazzite keys (adjust if different in your fork)
+ENV BAZZITE_KEY=/opt/bazzite/keys/bazzite_key.pem
+ENV BAZZITE_CERT=/opt/bazzite/keys/bazzite_cert.pem
+
+# Sign the kernel image
+RUN sbsign --key $BAZZITE_KEY --cert $BAZZITE_CERT \
+    --output /usr/src/vmlinuz-custom.signed /usr/src/vmlinuz-custom
+
+# Sign all kernel modules in place
+RUN find /usr/src/modules -type f -name '*.ko' | while read module; do \
+        /opt/bazzite/tools/kmodsign sha512 $BAZZITE_KEY $BAZZITE_CERT "$module" "$module"; \
+    done
+
+# Optional: verify kernel signature
+RUN sbsigntool verify /usr/src/vmlinuz-custom.signed
+
 
 
 
