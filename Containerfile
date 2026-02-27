@@ -60,26 +60,43 @@ RUN dnf5 -y install sbctl
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # attempt to sign kernel after each update
-RUN echo '#!/usr/bin/env bash' > /usr/local/sbin/sign-sideb.sh && \
-    echo 'DEPLOY_PATH=$(ostree admin status | awk "/pending deployment/{print \$3}")' >> /usr/local/sbin/sign-sideb.sh && \
-    echo 'if [ -n "$DEPLOY_PATH" ]; then' >> /usr/local/sbin/sign-sideb.sh && \
-    echo '    sbctl sign "$DEPLOY_PATH"/boot/vmlinuz* || true' >> /usr/local/sbin/sign-sideb.sh && \
-    echo '    sbctl sign "$DEPLOY_PATH"/usr/lib/modules/* || true' >> /usr/local/sbin/sign-sideb.sh && \
-    echo 'fi' >> /usr/local/sbin/sign-sideb.sh && \
+
+
+
+
+
+
+
+
+
+RUN echo "#!/usr/bin/env bash" > /usr/local/sbin/sign-sideb.sh && \
+    echo "DEPLOY_PATH=$(ostree admin status | awk \"/pending deployment/{print \$3}\")" >> /usr/local/sbin/sign-sideb.sh && \
+    echo "if [ -n \"$DEPLOY_PATH\" ]; then" >> /usr/local/sbin/sign-sideb.sh && \
+    echo "    sbctl sign \"$DEPLOY_PATH\"/boot/vmlinuz* || true" >> /usr/local/sbin/sign-sideb.sh && \
+    echo "    sbctl sign \"$DEPLOY_PATH\"/usr/lib/modules/* || true" >> /usr/local/sbin/sign-sideb.sh && \
+    echo "fi" >> /usr/local/sbin/sign-sideb.sh && \
     chmod +x /usr/local/sbin/sign-sideb.sh
 
-RUN echo '[Unit]' > /etc/systemd/system/sign-sideb.service && \
-    echo 'Description=Sign OSTree side-B after update' >> /etc/systemd/system/sign-sideb.service && \
-    echo 'After=ostree-post-transaction.target' >> /etc/systemd/system/sign-sideb.service && \
-    echo '' >> /etc/systemd/system/sign-sideb.service && \
-    echo '[Service]' >> /etc/systemd/system/sign-sideb.service && \
-    echo 'Type=oneshot' >> /etc/systemd/system/sign-sideb.service && \
-    echo 'ExecStart=/usr/local/sbin/sign-sideb.sh' >> /etc/systemd/system/sign-sideb.service && \
-    echo 'RemainAfterExit=no' >> /etc/systemd/system/sign-sideb.service && \
-    echo '' >> /etc/systemd/system/sign-sideb.service && \
-    echo '[Install]' >> /etc/systemd/system/sign-sideb.service && \
-    echo 'WantedBy=ostree-post-transaction.target' >> /etc/systemd/system/sign-sideb.service && \
+RUN echo "[Unit]" > /etc/systemd/system/sign-sideb.service && \
+    echo "Description=Sign OSTree side-B after update" >> /etc/systemd/system/sign-sideb.service && \
+    echo "After=ostree-post-transaction.target" >> /etc/systemd/system/sign-sideb.service && \
+    echo "" >> /etc/systemd/system/sign-sideb.service && \
+    echo "[Service]" >> /etc/systemd/system/sign-sideb.service && \
+    echo "Type=oneshot" >> /etc/systemd/system/sign-sideb.service && \
+    echo "ExecStart=/usr/local/sbin/sign-sideb.sh" >> /etc/systemd/system/sign-sideb.service && \
+    echo "RemainAfterExit=no" >> /etc/systemd/system/sign-sideb.service && \
+    echo "" >> /etc/systemd/system/sign-sideb.service && \
+    echo "[Install]" >> /etc/systemd/system/sign-sideb.service && \
+    echo "WantedBy=ostree-post-transaction.target" >> /etc/systemd/system/sign-sideb.service && \
     systemctl enable sign-sideb.service
+
+
+
+
+
+
+
+
 
 ##################################################################################################################################################
 ### :::::: fixes end here :::::: ###
