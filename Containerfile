@@ -137,7 +137,7 @@ RUN mkdir -p /etc/systemd/system \
  && echo "[Service]" >> /etc/systemd/system/sbctl-enroll.service \
  && echo "Type=oneshot" >> /etc/systemd/system/sbctl-enroll.service \
  && echo "RemainAfterExit=yes" >> /etc/systemd/system/sbctl-enroll.service \
- && echo "ExecStart=/bin/sh -c 'sbctl enroll-keys && sbctl lock'" >> /etc/systemd/system/sbctl-enroll.service \
+ && echo "ExecStart=/bin/sh -c 'sbctl enroll-keys -m'" >> /etc/systemd/system/sbctl-enroll.service \
  && echo "[Install]" >> /etc/systemd/system/sbctl-enroll.service \
  && echo "WantedBy=multi-user.target" >> /etc/systemd/system/sbctl-enroll.service
 
