@@ -76,14 +76,7 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
-# Initialize sbctl keys (idempotent)
-RUN sbctl create-keys \
-    && sbctl enroll-keys --force
 
-# Automatically sign all kernel files in /usr/lib/modules
-RUN for k in /usr/lib/modules/*/vmlinuz; do \
-        sbctl sign -s "$k"; \
-    done
 
 
 
@@ -113,7 +106,35 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
       sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
       dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 
+
+
+
+
+
+
 # test 
+
+
+
+
+
+
+# Initialize sbctl keys (idempotent)
+RUN sbctl create-keys \
+    && sbctl enroll-keys --force
+
+# Automatically sign all kernel files in /usr/lib/modules
+RUN for k in /usr/lib/modules/*/vmlinuz; do \
+        sbctl sign -s "$k"; \
+    done
+
+
+
+
+
+
+
+
 #RUN sbctl-batch-sign
 #RUN sbctl enroll-keys --microsoft
 
