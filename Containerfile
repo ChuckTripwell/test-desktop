@@ -121,7 +121,7 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 
 # Initialize sbctl keys (idempotent)
 RUN sbctl create-keys \
-    && sbctl enroll-keys
+    && sbctl enroll-keys -m
 
 # Automatically sign all kernel files in /usr/lib/modules
 RUN for k in /usr/lib/modules/*/vmlinuz; do \
