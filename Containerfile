@@ -75,11 +75,15 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
-RUN sbctl create-keys
 
-RUN sbctl enroll-keys --microsoft
+# Initialize sbctl keys (idempotent)
+RUN sbctl create-keys \
+    && sbctl enroll-keys --force
 
-RUN sbctl-batch-sign
+# Automatically sign all kernel files in /usr/lib/modules
+RUN for k in /usr/lib/modules/*/vmlinuz; do \
+        sbctl sign -s "$k"; \
+    done
 
 
 
