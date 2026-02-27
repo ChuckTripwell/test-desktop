@@ -61,11 +61,6 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # attempt to sign kernel after each update
 
-FROM registry.fedoraproject.org/fedora:38
-
-# Install sbctl, systemd, ostree
-RUN dnf install -y sbctl systemd ostree && dnf clean all
-
 # Create the enroll script safely (echo shebang first)
 RUN mkdir -p /usr/local/sbin && \
     echo "#!/usr/bin/env bash" > /usr/local/sbin/enroll-sbctl.sh && \
