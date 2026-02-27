@@ -60,60 +60,17 @@ RUN dnf5 -y install sbctl
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # attempt to sign kernel after each update
-
-# Create the enroll script safely (echo shebang first)
 RUN mkdir -p /usr/local/sbin && \
-    echo "#!/usr/bin/env bash" > /usr/local/sbin/enroll-sbctl.sh && \
-    echo "" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "# enroll-sbctl.sh: Create SBCTL keys if missing, then enroll Microsoft keys on new deployment" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "STAMP_FILE=\"/var/lib/sbctl/enrolled\"" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "LAST_DEPLOYMENT_FILE=\"/var/lib/sbctl/last_deployment\"" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "KEYS_DIR=\"/etc/secureboot/keys\"" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "mkdir -p \"\$(dirname \"\$STAMP_FILE\")\"" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "# 1. Create keys if they don't exist" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "if [ ! -d \"\$KEYS_DIR\" ] || [ -z \"\$(ls -A \$KEYS_DIR 2>/dev/null)\" ]; then" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "    echo \"Creating SBCTL keys...\"" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "    sbctl create-keys" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "fi" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "# 2. Determine current deployment checksum (side-B detection)" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "CURRENT_DEPLOYMENT=\$(ostree admin status | awk '/^\\*/{getline; print \$1}')" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "# 3. Read last deployment checksum if exists" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "if [ -f \"\$LAST_DEPLOYMENT_FILE\" ]; then" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "    LAST_DEPLOYMENT=\$(cat \"\$LAST_DEPLOYMENT_FILE\")" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "else" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "    LAST_DEPLOYMENT=\"\"" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "fi" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "# 4. Run enroll only if this is a new deployment" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "if [ \"\$CURRENT_DEPLOYMENT\" != \"\$LAST_DEPLOYMENT\" ] && [ ! -f \"\$STAMP_FILE\" ]; then" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "    echo \"Enrolling Microsoft Secure Boot keys...\"" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "    sbctl enroll-keys --microsoft" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "    echo \"\$CURRENT_DEPLOYMENT\" > \"\$LAST_DEPLOYMENT_FILE\"" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "    touch \"\$STAMP_FILE\"" >> /usr/local/sbin/enroll-sbctl.sh && \
-    echo "fi" >> /usr/local/sbin/enroll-sbctl.sh && \
-    chmod +x /usr/local/sbin/enroll-sbctl.sh
-
-# Create systemd service inside Dockerfile
-RUN cat > /etc/systemd/system/sbctl-enroll.service <<'EOF'
-[Unit]
-Description=Enroll Secure Boot keys only on new OSTree deployment
-After=network.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/sbin/enroll-sbctl.sh
-RemainAfterExit=no
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Enable service
-RUN systemctl enable sbctl-enroll.service
-
+    echo "#!/usr/bin/env bash" > /usr/local/sbin/sign-sideb.sh && \
+    echo "DEPLOY_PATH=\$(ostree admin status | awk '/pending deployment/{print \$3}')" >> /usr/local/sbin/sign-sideb.sh && \
+    echo "if [ -n \"\$DEPLOY_PATH\" ]; then" >> /usr/local/sbin/sign-sideb.sh && \
+    echo "    sbctl sign \"\$DEPLOY_PATH\"/boot/vmlinuz* || true" >> /usr/local/sbin/sign-sideb.sh && \
+    echo "    sbctl sign \"\$DEPLOY_PATH\"/usr/lib/modules/* || true" >> /usr/local/sbin/sign-sideb.sh && \
+    echo "fi" >> /usr/local/sbin/sign-sideb.sh && \
+    chmod +x /usr/local/sbin/sign-sideb.sh && \
+    echo -e '[Unit]\nDescription=Sign OSTree side-B after update\nAfter=ostree-post-transaction.target\n\n[Service]\nType=oneshot\nExecStart=/usr/local/sbin/sign-sideb.sh\nRemainAfterExit=no\n\n[Install]\nWantedBy=ostree-post-transaction.target' \
+    > /etc/systemd/system/sign-sideb.service && \
+    systemctl enable sign-sideb.service
 
 ##################################################################################################################################################
 ### :::::: fixes end here :::::: ###
