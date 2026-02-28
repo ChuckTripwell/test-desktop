@@ -125,7 +125,7 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 RUN chattr -i /sys/firmware/efi/efivars/*
 
 
-RUN bash -c 'mkdir -p /etc/systemd/system 
+RUN bash -c 'mkdir -p /etc/systemd/system'
 
 
 
