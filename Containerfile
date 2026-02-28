@@ -27,6 +27,11 @@ RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrob
 #COPY --from=cachyos /lib/modules /lib/modules
 #COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
+RPM dnf5 -y copr enable joanty24/cachyos-custom
+RUN dnf5 -y remove kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra 
+RUN dnf5 -y install --allowerasing install kernel-cachyos-custom-stable
+RPM dnf5 -y copr disable joanty24/cachyos-custom
+
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 #RUN dnf5 -y install rpmdevtools akmods
 
@@ -58,8 +63,6 @@ RUN dnf5 -y install python3-pygame
 
 # test for grub signing
 #RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
-
-# attempt to sign kernel after each update
 
 
 
