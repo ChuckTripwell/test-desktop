@@ -74,10 +74,7 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
-RUN for i in {pesign openssl kernel-devel mokutil keyutils} \
-    do \  
-        dnf5 install -y $i | true \
-    done
+RUN dnf5 install -y pesign openssl kernel-devel mokutil keyutils
 
 
 RUN echo "$USER" | tee -a /etc/pesign/users
