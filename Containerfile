@@ -143,7 +143,7 @@ RUN mokutil --import "cert.der"
 
 
 
-RUN cd /lib/modules/*/ \
+RUN cd /lib/modules/*/ && \
     pesign --certificate 'CachyOS Secure Boot' \
          --in /lib/modules/*/vmlinuz \
          --sign \
