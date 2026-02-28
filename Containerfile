@@ -1,12 +1,12 @@
 ##################################################################################################################################################
 ### :::::: pull cachyos :::::: ###
 ##################################################################################################################################################
-FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
+#FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 
 # :::::: prepare the kernel :::::: 
-RUN rm -rf /lib/modules/*
-RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm linux-cachyos-nvidia-open
+#RUN rm -rf /lib/modules/*
+#RUN pacman -Sy --noconfirm
+#RUN pacman -S --noconfirm linux-cachyos-nvidia-open
 
 
 ##################################################################################################################################################
@@ -23,12 +23,12 @@ RUN touch /usr/share/distrobox/distrobox.conf
 RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
 
 # :::::: forcefully remove and replace kernel :::::: 
-RUN rm -rf /lib/modules
-COPY --from=cachyos /lib/modules /lib/modules
-COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
+#RUN rm -rf /lib/modules
+#COPY --from=cachyos /lib/modules /lib/modules
+#COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-RUN dnf5 -y install rpmdevtools akmods
+#RUN dnf5 -y install rpmdevtools akmods
 
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
@@ -49,15 +49,15 @@ RUN dnf5 -y install python3-pygame
 ##################################################################################################################################################
 
 # :::::: install sbctl to sign some keys later..? ::::::
-RUN dnf5 -y copr enable chenxiaolong/sbctl
-RUN dnf5 -y install sbctl
+#RUN dnf5 -y copr enable chenxiaolong/sbctl
+#RUN dnf5 -y install sbctl
 
 
 # :::::: experimental millennium support :::::: 
 #RUN bash -c 'id(){ echo 1000; }; export -f id; curl -fsSL https://steambrew.app/install.sh -o /tmp/install.sh; sed -i "/:: Proceed with installation? \[Y\/n\]/d" /tmp/install.sh; bash /tmp/install.sh'
 
 # test for grub signing
-RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
+#RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # attempt to sign kernel after each update
 
@@ -66,7 +66,6 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
-# test 
 
 
 
