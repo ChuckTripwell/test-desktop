@@ -66,6 +66,45 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
+# test 
+
+
+
+
+
+
+
+RUN for i in {pesign openssl kernel-devel mokutil keyutils} \
+    do \  
+        dnf5 install -y $i | true \
+    done
+
+
+RUN echo "$USER" | tee -a /etc/pesign/users
+RUN /usr/libexec/pesign/pesign-authorize
+
+
+
+RUN openssl req -new -x509 -newkey rsa:2048 -keyout "key.pem" \
+        -outform DER -out "cert.der" -nodes -days 36500 \
+        -subj "/CN=CachyOS Secure Boot/"
+RUN openssl pkcs12 -export -out key.p12 -inkey key.pem -in cert.der
+RUN certutil -A -i cert.der -n "CachyOS Secure Boot" -d /etc/pki/pesign/ -t "Pu,Pu,Pu"
+
+
+RUN pk12util -i key.p12 -d /etc/pki/pesign
+RUN mokutil --import "cert.der"
+
+
+
+RUN cd /lib/modules/*/ && \
+    pesign --certificate 'CachyOS Secure Boot' \
+         --in /lib/modules/*/vmlinuz \
+         --sign \
+         --out /lib/modules/*/vmlinuz.signed
+
+
+RUN mv /lib/modules/*/vmlinuz.signed /lib/modules/*/vmlinuz
 
 
 
@@ -112,45 +151,6 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 
 
 
-# test 
-
-
-
-
-
-
-
-RUN for i in {pesign openssl kernel-devel mokutil keyutils} \
-    do \  
-        dnf5 install -y $i | true \
-    done
-
-
-RUN echo "$USER" | tee -a /etc/pesign/users
-RUN /usr/libexec/pesign/pesign-authorize
-
-
-
-RUN openssl req -new -x509 -newkey rsa:2048 -keyout "key.pem" \
-        -outform DER -out "cert.der" -nodes -days 36500 \
-        -subj "/CN=CachyOS Secure Boot/"
-RUN openssl pkcs12 -export -out key.p12 -inkey key.pem -in cert.der
-RUN certutil -A -i cert.der -n "CachyOS Secure Boot" -d /etc/pki/pesign/ -t "Pu,Pu,Pu"
-
-
-RUN pk12util -i key.p12 -d /etc/pki/pesign
-RUN mokutil --import "cert.der"
-
-
-
-RUN cd /lib/modules/*/ && \
-    pesign --certificate 'CachyOS Secure Boot' \
-         --in /lib/modules/*/vmlinuz \
-         --sign \
-         --out /lib/modules/*/vmlinuz.signed
-
-
-RUN mv /lib/modules/*/vmlinuz.signed /lib/modules/*/vmlinuz
 
 
 
