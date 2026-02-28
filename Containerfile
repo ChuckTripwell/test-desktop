@@ -27,7 +27,7 @@ RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrob
 #COPY --from=cachyos /lib/modules /lib/modules
 #COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
-RPM dnf5 -y copr enable joanty24/cachyos-custom
+RUN dnf5 -y copr enable joanty24/cachyos-custom
 RUN dnf5 -y remove kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra 
 RUN dnf5 -y install --allowerasing install kernel-cachyos-custom-stable
 RUN dnf5 -y copr disable joanty24/cachyos-custom
