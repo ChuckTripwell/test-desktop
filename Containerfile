@@ -6,7 +6,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 # :::::: prepare the kernel :::::: 
 RUN rm -rf /lib/modules/*
 RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm linux-cachyos-bmq-nvidia-open
+RUN pacman -S --noconfirm linux-cachyos-nvidia-open
 
 
 ##################################################################################################################################################
@@ -117,6 +117,9 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 
 
 
+
+
+RUN sbctl-batch-sign
 
 
 
