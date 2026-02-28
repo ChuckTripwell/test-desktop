@@ -125,7 +125,6 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 
 
 
-RUN sbctl enroll-keys --microsoft
 
 
 
