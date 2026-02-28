@@ -119,7 +119,7 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 
 
 
-RUN sbctl-batch-sign
+
 
 
 
