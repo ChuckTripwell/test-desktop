@@ -122,7 +122,7 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 
 
 
-RUN chattr -i /sys/firmware/efi/efivars/*
+
 
 
 RUN bash -c 'mkdir -p /etc/systemd/system'
@@ -136,7 +136,7 @@ RUN echo "[Unit]" >> /etc/systemd/system/sbctl-enroll.service && \
     echo "" >> /etc/systemd/system/sbctl-enroll.service && \
     echo "[Service]" >> /etc/systemd/system/sbctl-enroll.service && \
     echo "Type=oneshot" >> /etc/systemd/system/sbctl-enroll.service && \
-    echo "ExecStart=/usr/bin/bash -c \"sbctl enroll-keys -m && chattr -i /sys/firmware/efi/efivars/*\"" >> /etc/systemd/system/sbctl-enroll.service && \
+    echo "ExecStart=/usr/bin/bash -c \"chattr -i /sys/firmware/efi/efivars/* && sbctl enroll-keys -m && chattr -i /sys/firmware/efi/efivars/*\"" >> /etc/systemd/system/sbctl-enroll.service && \
     echo "RemainAfterExit=yes" >> /etc/systemd/system/sbctl-enroll.service && \
     echo "" >> /etc/systemd/system/sbctl-enroll.service && \
     echo "[Install]" >> /etc/systemd/system/sbctl-enroll.service && \
