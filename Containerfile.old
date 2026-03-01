@@ -59,7 +59,7 @@ RUN dnf5 -y install sbctl
 # test for grub signing
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
-# attempt to sign kernel after each update
+RUN dnf5 -y install sbsigntools
 
 
 
