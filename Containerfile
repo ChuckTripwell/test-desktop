@@ -89,6 +89,10 @@ RUN dnf5 -y install sbsigntools
 
 
 
+RUN sbctl sign -s $(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")
+
+RUN sbctl sign -s /usr/lib/modules/vmlinu*
+
 
 
 
@@ -108,6 +112,7 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 # test 
 #RUN sbctl-batch-sign
 #RUN sbctl enroll-keys --microsoft
+
 
 #  :::::: finish :::::: 
 ENV DRACUT_NO_XATTR=1
