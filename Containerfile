@@ -59,7 +59,7 @@ RUN dnf5 -y install sbctl
 # test for grub signing
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
-RUN dnf5 -y install sbsigntools
+RUN dnf5 -y install systemd-ukify
 
 
 
