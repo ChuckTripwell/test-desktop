@@ -89,7 +89,7 @@ RUN dnf5 -y install sbsigntools
 
 
 
-RUN sbctl sign -s $(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")
+RUN sbctl sign -s /usr/lib/module/*img
 
 RUN sbctl sign -s /usr/lib/modules/vmlinu*
 
