@@ -91,7 +91,7 @@ RUN echo "[Install]" >> /etc/systemd/system/ostree-finalize.path
 RUN echo "WantedBy=multi-user.target" >> /etc/systemd/system/ostree-finalize.path
 
 # Create the wrapper script
-RUN echo "#!/bin/bash" > /usr/local/bin/ostree-finalize.sh
+RUN echo '#!/bin/bash' > /usr/local/bin/ostree-finalize.sh
 RUN echo "set -euo pipefail" >> /usr/local/bin/ostree-finalize.sh
 RUN echo "" >> /usr/local/bin/ostree-finalize.sh
 RUN echo "if ostree admin status --verbose | grep -q 'staged'; then" >> /usr/local/bin/ostree-finalize.sh
