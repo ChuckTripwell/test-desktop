@@ -67,36 +67,30 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
-
-# Create ostree-post-update.sh
-RUN echo "#!/bin/bash" >> /usr/local/bin/ostree-post-update.sh && \
-    echo "set -e" >> /usr/local/bin/ostree-post-update.sh && \
-    echo "ostree admin finalize-staged || true" >> /usr/local/bin/ostree-post-update.sh && \
-    echo "sbctl-batch-sign || true" >> /usr/local/bin/ostree-post-update.sh && \
-    chmod +x /usr/local/bin/ostree-post-update.sh
-
-# Create ostree-update-watch.service
-RUN echo "[Unit]" >> /etc/systemd/system/ostree-update-watch.service && \
-    echo "Description=Run post-OSTree update commands" >> /etc/systemd/system/ostree-update-watch.service && \
-    echo "" >> /etc/systemd/system/ostree-update-watch.service && \
-    echo "[Service]" >> /etc/systemd/system/ostree-update-watch.service && \
-    echo "Type=oneshot" >> /etc/systemd/system/ostree-update-watch.service && \
-    echo "ExecStart=/usr/local/bin/ostree-post-update.sh" >> /etc/systemd/system/ostree-update-watch.service
+# Create ostree-update-watch.service with retry loop
+RUN echo "[Unit]" >> /etc/systemd/system/ostree-update-watch.service
+RUN echo "Description=Run post-OSTree update commands" >> /etc/systemd/system/ostree-update-watch.service
+RUN echo "StartLimitIntervalSec=0" >> /etc/systemd/system/ostree-update-watch.service
+RUN echo "" >> /etc/systemd/system/ostree-update-watch.service
+RUN echo "[Service]" >> /etc/systemd/system/ostree-update-watch.service
+RUN echo "Type=oneshot" >> /etc/systemd/system/ostree-update-watch.service
+RUN echo "ExecStart=/bin/bash -c 'while ! ostree admin finalize-staged && sbctl-batch-sign; do echo Failed, retrying in 2s; sleep 2; done'" >> /etc/systemd/system/ostree-update-watch.service
+RUN echo "Restart=always" >> /etc/systemd/system/ostree-update-watch.service
+RUN echo "RestartSec=0" >> /etc/systemd/system/ostree-update-watch.service
 
 # Create ostree-update-watch.path
-RUN echo "[Unit]" >> /etc/systemd/system/ostree-update-watch.path && \
-    echo "Description=Watch OSTree deployments for changes" >> /etc/systemd/system/ostree-update-watch.path && \
-    echo "" >> /etc/systemd/system/ostree-update-watch.path && \
-    echo "[Path]" >> /etc/systemd/system/ostree-update-watch.path && \
-    echo "PathModified=/ostree/deploy" >> /etc/systemd/system/ostree-update-watch.path && \
-    echo "Unit=ostree-update-watch.service" >> /etc/systemd/system/ostree-update-watch.path && \
-    echo "" >> /etc/systemd/system/ostree-update-watch.path && \
-    echo "[Install]" >> /etc/systemd/system/ostree-update-watch.path && \
-    echo "WantedBy=multi-user.target" >> /etc/systemd/system/ostree-update-watch.path
+RUN echo "[Unit]" >> /etc/systemd/system/ostree-update-watch.path
+RUN echo "Description=Watch OSTree deployments for changes" >> /etc/systemd/system/ostree-update-watch.path
+RUN echo "" >> /etc/systemd/system/ostree-update-watch.path
+RUN echo "[Path]" >> /etc/systemd/system/ostree-update-watch.path
+RUN echo "PathModified=/ostree/deploy" >> /etc/systemd/system/ostree-update-watch.path
+RUN echo "Unit=ostree-update-watch.service" >> /etc/systemd/system/ostree-update-watch.path
+RUN echo "" >> /etc/systemd/system/ostree-update-watch.path
+RUN echo "[Install]" >> /etc/systemd/system/ostree-update-watch.path
+RUN echo "WantedBy=multi-user.target" >> /etc/systemd/system/ostree-update-watch.path
 
+# Enable the path unit
 RUN systemctl enable ostree-update-watch.path
-
-
 
 
 
