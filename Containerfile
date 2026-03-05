@@ -102,7 +102,6 @@ RUN echo 'fi' >> /etc/ublue-os/ostree-finalize.sh
 RUN chmod +x /etc/ublue-os/ostree-finalize.sh
 
 # Enable the path unit
-RUN systemctl daemon-reload
 RUN systemctl enable ostree-finalize.path
 
 
