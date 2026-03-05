@@ -71,156 +71,118 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
+# Ensure ublue-os directory exists
+RUN mkdir -p /etc/ublue-os
 
+# ---------------------------
+# Pre-Reboot Script
+# ---------------------------
+RUN cat << 'EOF' > /etc/ublue-os/pre-reboot-sign.sh
+#!/usr/bin/env bash
+set -euo pipefail
 
+REPO="/sysroot/ostree/repo"
+WORKDIR="/tmp/signing"
 
-RUN mkdir -p /etc/ublue-os || true
+BOOTED_LINE=$(ostree admin status | grep '\*')
+BRANCH=$(echo "$BOOTED_LINE" | awk '{print ($1=="*")?$2:$1}')
+COMMIT=$(echo "$BOOTED_LINE" | awk '{print ($1=="*")?$3:$2}')
+CLEAN_COMMIT="${COMMIT%%.*}"
 
-RUN echo '#!/usr/bin/env bash ' > /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'set -euo pipefail ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'REPO="/sysroot/ostree/repo" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'WORKDIR="/tmp/signing" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'BOOTED_LINE=$(ostree admin status | grep '\*') ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo "BRANCH=\$(echo \"\$BOOTED_LINE\" | awk '{print (\$1==\"*\")?\$2:\$1}')" >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'COMMIT=$(echo "$BOOTED_LINE" | awk '{print ($1=="*")?$3:$2}') ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'CLEAN_COMMIT="${COMMIT%%.*}" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'rm -rf "$WORKDIR" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '# Find kernel paths inside the commit ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'KERNELS=$(ostree ls "$CLEAN_COMMIT" /usr/lib/modules | awk '/vmlinuz/ {print $NF}') ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'for k in $KERNELS; do ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    SRC="/usr/lib/modules/$k/vmlinuz" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    DST="$WORKDIR/vmlinuz-$k" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    # Extract kernel ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    ostree cat "$CLEAN_COMMIT" "$SRC" > "$DST" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    # Sign it ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    sbctl sign -s "$DST" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    echo "✓ Signed $SRC" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'done ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '# Build minimal overlay tree ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'mkdir -p "$WORKDIR/tree/usr/lib/modules" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'for k in $KERNELS; do ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    mkdir -p "$WORKDIR/tree/usr/lib/modules/$k" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    mv "$WORKDIR/vmlinuz-$k" "$WORKDIR/tree/usr/lib/modules/$k/vmlinuz" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'done ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '# Commit overlay on top of existing commit ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'ostree commit \ ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    --repo="$REPO" \ ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    --branch="$BRANCH" \ ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    --parent="$CLEAN_COMMIT" \ ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    --tree=ref="$CLEAN_COMMIT" \ ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    --tree=dir="$WORKDIR/tree" \ ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo '    --subject="Signed kernels ($(date))" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'ostree admin deploy "$BRANCH" ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo ' ' >> /etc/ublue-os/pre-reboot-sign.sh
-RUN echo 'echo "Deployment ready. Reboot to use signed kernels." ' >> /etc/ublue-os/pre-reboot-sign.sh
+rm -rf "$WORKDIR"
 
+# Find kernel paths inside the commit
+KERNELS=$(ostree ls "$CLEAN_COMMIT" /usr/lib/modules | awk '/vmlinuz/ {print $NF}')
 
+for k in $KERNELS; do
+    SRC="/usr/lib/modules/$k/vmlinuz"
+    DST="$WORKDIR/vmlinuz-$k"
 
+    # Extract kernel
+    ostree cat "$CLEAN_COMMIT" "$SRC" > "$DST"
 
+    # Sign it
+    sbctl sign -s "$DST"
 
+    echo "✓ Signed $SRC"
+done
 
+# Build minimal overlay tree
+mkdir -p "$WORKDIR/tree/usr/lib/modules"
 
+for k in $KERNELS; do
+    mkdir -p "$WORKDIR/tree/usr/lib/modules/$k"
+    mv "$WORKDIR/vmlinuz-$k" "$WORKDIR/tree/usr/lib/modules/$k/vmlinuz"
+done
 
-RUN mkdir -p /etc/ublue-os || true
+# Commit overlay on top of existing commit
+ostree commit \
+    --repo="$REPO" \
+    --branch="$BRANCH" \
+    --parent="$CLEAN_COMMIT" \
+    --tree=ref="$CLEAN_COMMIT" \
+    --tree=dir="$WORKDIR/tree" \
+    --subject="Signed kernels ($(date))"
 
-RUN echo '#!/usr/bin/env bash' > /etc/ublue-os/post-reboot.sh
-RUN echo 'set -euo pipefail' >> /etc/ublue-os/post-reboot.sh
-RUN echo '' >> /etc/ublue-os/post-reboot.sh
-RUN echo 'sbctl-batch-sign && bootc switch ghcr.io/chucktripwell/frankengold-desktop:latest' >> /etc/ublue-os/post-reboot.sh
+ostree admin deploy "$BRANCH"
 
+echo "Deployment ready. Reboot to use signed kernels."
 
+EOF
 
+# ---------------------------
+# Post-Reboot Script
+# ---------------------------
+RUN cat << 'EOF' > /etc/ublue-os/post-reboot.sh
+#!/usr/bin/env bash
+set -euo pipefail
 
+sbctl-batch-sign && bootc switch ghcr.io/chucktripwell/frankengold-desktop:latest
+EOF
 
+# ---------------------------
+# Pre-Reboot Systemd Service
+# ---------------------------
+RUN cat << 'EOF' > /etc/systemd/system/ublue-pre-reboot.service
+[Unit]
+Description=Run pre-reboot script after OSTree pull
+After=ostree-finalize-staged.service
+Requires=ostree-finalize-staged.service
 
+[Service]
+Type=oneshot
+ExecStart=/etc/ublue-os/pre-reboot-sign.sh
+User=root
+Group=root
+RemainAfterExit=yes
 
+[Install]
+WantedBy=multi-user.target
+EOF
 
+RUN systemctl enable ublue-pre-reboot.service
 
+# ---------------------------
+# Post-Reboot Systemd Service
+# ---------------------------
+RUN cat << 'EOF' > /etc/systemd/system/ublue-post-boot.service
+[Unit]
+Description=Run post-reboot script after system boot
+After=network.target
+Wants=network.target
 
+[Service]
+Type=oneshot
+ExecStart=/etc/ublue-os/post-reboot.sh
+User=root
+Group=root
+RemainAfterExit=no
 
+[Install]
+WantedBy=multi-user.target
+EOF
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Pre-Reboot Service
-
-RUN "echo '[Unit]' > /etc/systemd/system/ublue-pre-reboot.service"
-RUN "echo 'Description=Run pre-reboot script after OSTree pull' >> /etc/systemd/system/ublue-pre-reboot.service"
-RUN "echo 'After=ostree-finalize-staged.service' >> /etc/systemd/system/ublue-pre-reboot.service"
-RUN "echo 'Requires=ostree-finalize-staged.service' >> /etc/systemd/system/ublue-pre-reboot.service"
-
-RUN "echo '' >> /etc/systemd/system/ublue-pre-reboot.service"
-RUN "echo '[Service]' >> /etc/systemd/system/ublue-pre-reboot.service"
-RUN "echo 'Type=oneshot' >> /etc/systemd/system/ublue-pre-reboot.service"
-RUN "echo 'ExecStart=/etc/ublue-os/pre-reboot-sign.sh' >> /etc/systemd/system/ublue-pre-reboot.service"
-RUN "echo 'User=root' >> /etc/systemd/system/ublue-pre-reboot.service"
-RUN "echo 'Group=root' >> /etc/systemd/system/ublue-pre-reboot.service"
-RUN "echo 'RemainAfterExit=yes' >> /etc/systemd/system/ublue-pre-reboot.service"
-
-RUN "echo '' >> /etc/systemd/system/ublue-pre-reboot.service"
-RUN "echo '[Install]' >> /etc/systemd/system/ublue-pre-reboot.service"
-RUN "echo 'WantedBy=multi-user.target' >> /etc/systemd/system/ublue-pre-reboot.service"
-
-RUN "systemctl enable ublue-pre-reboot.service"
-
-
-
-
-
-
-
-
-
-
-# Post-Reboot Service
-
-RUN "echo '[Unit]' > /etc/systemd/system/ublue-post-boot.service"
-RUN "echo 'Description=Run post-reboot script after system boot' >> /etc/systemd/system/ublue-post-boot.service"
-RUN "echo 'After=network.target' >> /etc/systemd/system/ublue-post-boot.service"
-RUN "echo 'Wants=network.target' >> /etc/systemd/system/ublue-post-boot.service"
-
-RUN "echo '' >> /etc/systemd/system/ublue-post-boot.service"
-RUN "echo '[Service]' >> /etc/systemd/system/ublue-post-boot.service"
-RUN "echo 'Type=oneshot' >> /etc/systemd/system/ublue-post-boot.service"
-RUN "echo 'ExecStart=/etc/ublue-os/post-reboot.sh' >> /etc/systemd/system/ublue-post-boot.service"
-RUN "echo 'User=root' >> /etc/systemd/system/ublue-post-boot.service"
-RUN "echo 'Group=root' >> /etc/systemd/system/ublue-post-boot.service"
-RUN "echo 'RemainAfterExit=no' >> /etc/systemd/system/ublue-post-boot.service"
-
-RUN "echo '' >> /etc/systemd/system/ublue-post-boot.service"
-RUN "echo '[Install]' >> /etc/systemd/system/ublue-post-boot.service"
-RUN "echo 'WantedBy=multi-user.target' >> /etc/systemd/system/ublue-post-boot.service"
-
-RUN "systemctl enable ublue-post-boot.service"
-
+RUN systemctl enable ublue-post-boot.service
 
 
 
