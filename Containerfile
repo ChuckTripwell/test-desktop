@@ -67,13 +67,20 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 
+# Create ostree-post-update.sh
+RUN echo "#!/bin/bash" >> /usr/local/bin/ostree-post-update.sh && \
+    echo "set -e" >> /usr/local/bin/ostree-post-update.sh && \
+    echo "ostree admin finalize-staged || true" >> /usr/local/bin/ostree-post-update.sh && \
+    echo "sbctl-batch-sign || true" >> /usr/local/bin/ostree-post-update.sh && \
+    chmod +x /usr/local/bin/ostree-post-update.sh
+
 # Create ostree-update-watch.service
 RUN echo "[Unit]" >> /etc/systemd/system/ostree-update-watch.service && \
     echo "Description=Run post-OSTree update commands" >> /etc/systemd/system/ostree-update-watch.service && \
     echo "" >> /etc/systemd/system/ostree-update-watch.service && \
     echo "[Service]" >> /etc/systemd/system/ostree-update-watch.service && \
     echo "Type=oneshot" >> /etc/systemd/system/ostree-update-watch.service && \
-    echo "ExecStart=ostree admin finalize-staged & sbctl-batch-sign" >> /etc/systemd/system/ostree-update-watch.service
+    echo "ExecStart=/usr/local/bin/ostree-post-update.sh" >> /etc/systemd/system/ostree-update-watch.service
 
 # Create ostree-update-watch.path
 RUN echo "[Unit]" >> /etc/systemd/system/ostree-update-watch.path && \
@@ -86,8 +93,6 @@ RUN echo "[Unit]" >> /etc/systemd/system/ostree-update-watch.path && \
     echo "[Install]" >> /etc/systemd/system/ostree-update-watch.path && \
     echo "WantedBy=multi-user.target" >> /etc/systemd/system/ostree-update-watch.path
 
-
-RUN systemctl enable ostree-update-watch.service
 RUN systemctl enable ostree-update-watch.path
 
 
