@@ -84,7 +84,7 @@ set -euo pipefail
 REPO="/sysroot/ostree/repo"
 WORKDIR="/tmp/signing"
 
-BOOTED_LINE=$(ostree admin status | grep '*')
+BOOTED_LINE=$(ostree admin status | grep '\*')
 BRANCH=$(echo "$BOOTED_LINE" | awk '{print ($1=="*")?$2:$1}')
 COMMIT=$(echo "$BOOTED_LINE" | awk '{print ($1=="*")?$3:$2}')
 CLEAN_COMMIT="${COMMIT%%.*}"
@@ -98,7 +98,10 @@ for k in $KERNELS; do
     SRC="/usr/lib/modules/$k/vmlinuz"
     DST="$WORKDIR/vmlinuz-$k"
 
+    # Extract kernel
     ostree cat "$CLEAN_COMMIT" "$SRC" > "$DST"
+
+    # Sign it
     sbctl sign -s "$DST"
 
     echo "✓ Signed $SRC"
@@ -112,6 +115,7 @@ for k in $KERNELS; do
     mv "$WORKDIR/vmlinuz-$k" "$WORKDIR/tree/usr/lib/modules/$k/vmlinuz"
 done
 
+# Commit overlay on top of existing commit
 ostree commit \
     --repo="$REPO" \
     --branch="$BRANCH" \
