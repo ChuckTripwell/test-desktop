@@ -1,15 +1,4 @@
 ##################################################################################################################################################
-### :::::: pull cachyos :::::: ###
-##################################################################################################################################################
-FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
-
-# :::::: prepare the kernel :::::: 
-RUN rm -rf /lib/modules/*
-RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm linux-cachyos-nvidia-open
-
-
-##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
 ##################################################################################################################################################
 FROM ghcr.io/ublue-os/bazzite-nvidia-open:latest
@@ -21,11 +10,6 @@ RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask -
 RUN mkdir -p /usr/share/distrobox/
 RUN touch /usr/share/distrobox/distrobox.conf
 RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
-
-# :::::: forcefully remove and replace kernel :::::: 
-RUN rm -rf /lib/modules
-COPY --from=cachyos /lib/modules /lib/modules
-COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 RUN dnf5 -y install rpmdevtools akmods
@@ -48,83 +32,14 @@ RUN dnf5 -y install python3-pygame
 ### :::::: fixes :::::: ###
 ##################################################################################################################################################
 
-# :::::: install sbctl to sign some keys later..? ::::::
-RUN dnf5 -y copr enable chenxiaolong/sbctl
-RUN dnf5 -y install sbctl
-
-
-# :::::: experimental millennium support :::::: 
-#RUN bash -c 'id(){ echo 1000; }; export -f id; curl -fsSL https://steambrew.app/install.sh -o /tmp/install.sh; sed -i "/:: Proceed with installation? \[Y\/n\]/d" /tmp/install.sh; bash /tmp/install.sh'
-
-# test for grub signing
-RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
+RUN dnf5 -y copr enable bieszczaders/kernel-cachyos
+RUN dnf5 -y install --allowerasing kernel-cachyos
+RUN dnf5 -y copr disable bieszczaders/kernel-cachyos
 
 
 ##################################################################################################################################################
 ### :::::: fixes end here :::::: ###
 ##################################################################################################################################################
-
-# :::::: automatically create keys and enroll :::::: 
-
-# Create script
-RUN echo "#!/usr/bin/env bash" > /etc/ublue-os/sign_with_mc_keys.sh
-RUN echo "sbctl create-keys || true" >> /etc/ublue-os/sign_with_mc_keys.sh
-RUN echo "sbctl enroll-keys --microsoft || true" >> /etc/ublue-os/sign_with_mc_keys.sh
-RUN chmod +x /etc/ublue-os/sign_with_mc_keys.sh
-
-# Create systemd service
-RUN echo "[Unit]" > /etc/systemd/system/ublue-sign-mok.service
-RUN echo "Description=Sign Secure Boot keys with Microsoft keys" >> /etc/systemd/system/ublue-sign-mok.service
-RUN echo "After=local-fs.target" >> /etc/systemd/system/ublue-sign-mok.service
-RUN echo "" >> /etc/systemd/system/ublue-sign-mok.service
-RUN echo "[Service]" >> /etc/systemd/system/ublue-sign-mok.service
-RUN echo "Type=oneshot" >> /etc/systemd/system/ublue-sign-mok.service
-RUN echo "ExecStart=/etc/ublue-os/sign_with_mc_keys.sh" >> /etc/systemd/system/ublue-sign-mok.service
-RUN echo "" >> /etc/systemd/system/ublue-sign-mok.service
-RUN echo "[Install]" >> /etc/systemd/system/ublue-sign-mok.service
-RUN echo "WantedBy=multi-user.target" >> /etc/systemd/system/ublue-sign-mok.service
-
-# Enable service
-RUN systemctl enable ublue-sign-mok.service
-
-# :::::: sign new kernels with sbctl (before a reboot?) :::::: 
-# Create ostree-pre-reboot-finalize.service
-#
-RUN echo "[Unit]" > /etc/systemd/system/ostree-pre-reboot-finalize.service
-RUN echo "Description=Finalize staged OSTree deployment and sign bootloader" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
-RUN echo "Wants=ostree-finalize.path" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
-RUN echo "After=local-fs.target" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
-RUN echo "" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
-RUN echo "[Service]" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
-RUN echo "Type=oneshot" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
-RUN echo "ExecStart=/etc/ublue-os/ostree-finalize.sh" >> /etc/systemd/system/ostree-pre-reboot-finalize.service
-
-# Create ostree-pre-reboot-finalize.path
-#
-RUN echo "[Unit]" > /etc/systemd/system/ostree-pre-reboot-finalize.path
-RUN echo "Description=Watch /ostree/deploy for new OSTree deployments" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
-RUN echo "" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
-RUN echo "[Path]" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
-RUN echo "PathModified=/ostree/deploy" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
-RUN echo "Unit=ostree-pre-reboot-finalize.service" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
-RUN echo "" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
-RUN echo "[Install]" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
-RUN echo "WantedBy=multi-user.target" >> /etc/systemd/system/ostree-pre-reboot-finalize.path
-
-# Create the wrapper script
-#
-RUN mkdir -p /etc/ublue-os || true
-RUN echo '#!/bin/bash' > /etc/ublue-os/ostree-finalize.sh
-RUN echo 'set -euo pipefail' >> /etc/ublue-os/ostree-finalize.sh
-RUN echo '' >> /etc/ublue-os/ostree-finalize.sh
-#RUN echo 'sbctl create-keys || true' >> /etc/ublue-os/ostree-finalize.sh
-#RUN echo 'sbctl enroll-keys --microsoft || true' >> /etc/ublue-os/ostree-finalize.sh
-RUN echo 'ostree admin finalize-staged & sbctl-batch-sign' >> /etc/ublue-os/ostree-finalize.sh
-RUN chmod +x /etc/ublue-os/ostree-finalize.sh
-
-# Enable the path unit
-#
-RUN systemctl enable ostree-pre-reboot-finalize.path
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
@@ -135,7 +50,6 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 
 # test 
 #RUN sbctl-batch-sign
-#RUN sbctl enroll-keys --microsoft
 
 
 #  :::::: finish :::::: 
