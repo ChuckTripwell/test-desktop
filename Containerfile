@@ -65,6 +65,29 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 ### :::::: fixes end here :::::: ###
 ##################################################################################################################################################
 
+# :::::: automatically create keys and enroll :::::: 
+
+# Create script
+RUN echo "#!/usr/bin/env bash" > /etc/ublue-os/sign_with_mc_keys.sh
+RUN echo "sbctl create-keys || true" >> /etc/ublue-os/sign_with_mc_keys.sh
+RUN echo "sbctl enroll-keys --microsoft || true" >> /etc/ublue-os/sign_with_mc_keys.sh
+RUN chmod +x /etc/ublue-os/sign_with_mc_keys.sh
+
+# Create systemd service
+RUN echo "[Unit]" > /etc/systemd/system/ublue-sign-mok.service
+RUN echo "Description=Sign Secure Boot keys with Microsoft keys" >> /etc/systemd/system/ublue-sign-mok.service
+RUN echo "After=local-fs.target" >> /etc/systemd/system/ublue-sign-mok.service
+RUN echo "" >> /etc/systemd/system/ublue-sign-mok.service
+RUN echo "[Service]" >> /etc/systemd/system/ublue-sign-mok.service
+RUN echo "Type=oneshot" >> /etc/systemd/system/ublue-sign-mok.service
+RUN echo "ExecStart=/etc/ublue-os/sign_with_mc_keys.sh" >> /etc/systemd/system/ublue-sign-mok.service
+RUN echo "" >> /etc/systemd/system/ublue-sign-mok.service
+RUN echo "[Install]" >> /etc/systemd/system/ublue-sign-mok.service
+RUN echo "WantedBy=multi-user.target" >> /etc/systemd/system/ublue-sign-mok.service
+
+# Enable service
+RUN systemctl enable ublue-sign-mok.service
+
 # :::::: sign new kernels with sbctl (before a reboot?) :::::: 
 # Create ostree-pre-reboot-finalize.service
 #
