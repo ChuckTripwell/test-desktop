@@ -6,7 +6,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 # :::::: prepare the kernel :::::: 
 RUN rm -rf /lib/modules/*
 RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm linux
+RUN pacman -S --noconfirm linux-zen
 #linux-cachyos-nvidia-open
 
 
