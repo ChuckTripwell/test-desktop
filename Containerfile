@@ -65,7 +65,46 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 ##################################################################################################################################################
 
 # :::::: sign new kernels with sbctl (before a reboot?) :::::: 
-RUN sed -i 's|^ExecStop=/usr/bin/ostree admin finalize-staged|ExecStop=/usr/bin/ostree admin finalize-staged \& sbctl-batch-sign|' /usr/lib/systemd/system/ostree-finalize-staged.service
+# Create ostree-finalize.service
+#
+RUN echo "[Unit]" >> /etc/systemd/system/ostree-finalize.service
+RUN echo "Description=Finalize staged OSTree deployment and sign bootloader" >> /etc/systemd/system/ostree-finalize.service
+RUN echo "Wants=ostree-finalize.path" >> /etc/systemd/system/ostree-finalize.service
+RUN echo "After=local-fs.target" >> /etc/systemd/system/ostree-finalize.service
+RUN echo "" >> /etc/systemd/system/ostree-finalize.service
+RUN echo "[Service]" >> /etc/systemd/system/ostree-finalize.service
+RUN echo "Type=oneshot" >> /etc/systemd/system/ostree-finalize.service
+RUN echo "ExecStart=/etc/ublue-os/ostree-finalize.sh" >> /etc/systemd/system/ostree-finalize.service
+
+# Create ostree-finalize.path
+#
+RUN echo "[Unit]" >> /etc/systemd/system/ostree-finalize.path
+RUN echo "Description=Watch /ostree/deploy for new OSTree deployments" >> /etc/systemd/system/ostree-finalize.path
+RUN echo "" >> /etc/systemd/system/ostree-finalize.path
+RUN echo "[Path]" >> /etc/systemd/system/ostree-finalize.path
+RUN echo "PathModified=/ostree/deploy" >> /etc/systemd/system/ostree-finalize.path
+RUN echo "Unit=ostree-finalize.service" >> /etc/systemd/system/ostree-finalize.path
+RUN echo "" >> /etc/systemd/system/ostree-finalize.path
+RUN echo "[Install]" >> /etc/systemd/system/ostree-finalize.path
+RUN echo "WantedBy=multi-user.target" >> /etc/systemd/system/ostree-finalize.path
+
+# Create the wrapper script
+#
+RUN mkdir -p /etc/ublue-os || true
+RUN echo '#!/bin/bash' > /etc/ublue-os/ostree-finalize.sh
+RUN echo 'set -euo pipefail' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo '' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo 'if ostree admin status --verbose | grep -q staged; then' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo '    sbctl create-keys || true' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo '    sbctl enroll-keys --microsoft || true' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo '    ostree admin finalize-staged' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo '    sbctl-batch-sign' >> /etc/ublue-os/ostree-finalize.sh
+RUN echo 'fi' >> /etc/ublue-os/ostree-finalize.sh
+RUN chmod +x /etc/ublue-os/ostree-finalize.sh
+
+# Enable the path unit
+#
+RUN systemctl enable ostree-finalize.path
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
