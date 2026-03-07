@@ -44,12 +44,28 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install python3-pygame
 
+
+
+# :::::: SecureBoot stuff :::::: 
 RUN dnf5 -y install --allowerasing sbsigntools jq
 
 RUN mkdir -p /etc/secureboot_keys
 COPY MOK.pem /etc/secureboot_keys/
 COPY MOK.der /etc/secureboot_keys/
 
+RUN echo '[Unit]' > /etc/systemd/system/add-mok-key.service
+RUN echo 'Description=Add MOK Key Using mokutil' >> /etc/systemd/system/add-mok-key.service
+RUN echo 'After=local-fs.target' >> /etc/systemd/system/add-mok-key.service
+RUN echo '' >> /etc/systemd/system/add-mok-key.service
+RUN echo '[Service]' >> /etc/systemd/system/add-mok-key.service
+RUN echo 'Type=oneshot' >> /etc/systemd/system/add-mok-key.service
+RUN echo 'mokutil --timeout -1 & echo -e "universalblue\nuniversalblue" | mokutil --import /etc/secureboot_keys/MOK.der' >> /etc/systemd/system/add-mok-key.service
+RUN echo 'RemainAfterExit=yes' >> /etc/systemd/system/add-mok-key.service
+RUN echo '' >> /etc/systemd/system/add-mok-key.service
+RUN echo '[Install]' >> /etc/systemd/system/add-mok-key.service
+RUN echo 'WantedBy=multi-user.target' >> /etc/systemd/system/add-mok-key.service
+
+RUN systemctl enable /etc/systemd/system/add-mok-key.service
 
 
 
