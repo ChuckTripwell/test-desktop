@@ -50,15 +50,7 @@ RUN dnf5 -y install python3-pygame
 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
-RUN MOK_PRIV=$(mktemp) && \
-    echo "$MOK_SECRET" > "$MOK_PRIV" && \
-    chmod 600 "$MOK_PRIV" && \
-    VMLINUZ=$(find /lib/modules -type f -name vmlinuz | head -n1) && \
-    [ -n "$VMLINUZ" ] || (echo "Kernel not found!" && exit 1) && \
-    SIGNED=$(mktemp) && \
-    sbsign --key "$MOK_PRIV" --cert MOK.x509 --output "$SIGNED" "$VMLINUZ" && \
-    install -m 0644 "$SIGNED" "$VMLINUZ" && \
-    rm -f "$SIGNED" "$MOK_PRIV"
+RUN echo "$KERNEL_SECRET" > /tmp/MOK.priv && chmod 600 /tmp/MOK.priv && VMLINUZ=$(find /lib/modules -type f -name vmlinuz | head -n1) && sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz "$VMLINUZ" && install -m 0644 signed-vmlinuz "$VMLINUZ" && rm -f signed-vmlinuz /tmp/MOK.priv
 
 
 RUN mkdir -p /etc/secureboot_keys
