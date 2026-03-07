@@ -48,6 +48,7 @@ RUN dnf5 -y install python3-pygame
 
 # :::::: SecureBoot stuff :::::: 
 
+RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
 RUN MOK_PRIV=$(mktemp) && \
     echo "$MOK_SECRET" > "$MOK_PRIV" && \
@@ -59,9 +60,6 @@ RUN MOK_PRIV=$(mktemp) && \
     install -m 0644 "$SIGNED" "$VMLINUZ" && \
     rm -f "$SIGNED" "$MOK_PRIV"
 
-
-
-RUN dnf5 -y install --allowerasing sbsigntools jq
 
 RUN mkdir -p /etc/secureboot_keys
 COPY MOK.pem /etc/secureboot_keys/
