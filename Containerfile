@@ -30,19 +30,8 @@ COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 RUN dnf5 -y install rpmdevtools akmods
 
-# :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
-# :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
-RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
-#RUN echo "vm.swappiness=10" >> /etc/sysctl.conf
-RUN echo "kernel.sched_migration_cost_ns=5000000" >> /etc/sysctl.d/80-gamecompatibility.conf
 
-# :::::: install preformence-related stuff :::::: 
-RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
-RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
-RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
-# :::::: install additional stuff :::::: 
-RUN dnf5 -y install python3-pygame
 
 
 
@@ -50,7 +39,7 @@ RUN dnf5 -y install python3-pygame
 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
-RUN RUN printf "%b" "$KERNEL_SECRET" > /tmp/MOK.priv && chmod 600 /tmp/MOK.priv && VMLINUZ=$(find /lib/modules -type f -name vmlinuz | head -n1) && sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz "$VMLINUZ" && install -m 0644 signed-vmlinuz "$VMLINUZ" && rm -f signed-vmlinuz /tmp/MOK.priv
+RUN printf "%b" "$KERNEL_SECRET" > /tmp/MOK.priv && chmod 600 /tmp/MOK.priv && VMLINUZ=$(find /lib/modules -type f -name vmlinuz | head -n1) && sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz "$VMLINUZ" && install -m 0644 signed-vmlinuz "$VMLINUZ" && rm -f signed-vmlinuz /tmp/MOK.priv
 
 
 RUN mkdir -p /etc/secureboot_keys
@@ -73,6 +62,25 @@ RUN systemctl enable /etc/systemd/system/add-mok-key.service
 
 
 
+
+
+
+
+
+
+# :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
+# :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
+RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
+#RUN echo "vm.swappiness=10" >> /etc/sysctl.conf
+RUN echo "kernel.sched_migration_cost_ns=5000000" >> /etc/sysctl.d/80-gamecompatibility.conf
+
+# :::::: install preformence-related stuff :::::: 
+RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
+RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
+RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
+
+# :::::: install additional stuff :::::: 
+RUN dnf5 -y install python3-pygame
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
