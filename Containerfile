@@ -44,6 +44,16 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install python3-pygame
 
+RUN dnf5 -y install --allowerasing sbsigntools jq
+
+RUN mkdir -p /etc/secureboot_keys
+COPY MOK.pem /etc/secureboot_keys/
+COPY MOK.der /etc/secureboot_keys/
+
+
+
+
+
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
 RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
