@@ -55,8 +55,7 @@ jobs:
 
       - name: Sign the kernel
         run: |
-          sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz /usr/lib/modules/$(uname -r)/vmlinuz
-
+          sbsign --key /tmp/MOK.priv --cert MOK.x509 --output signed-vmlinuz /usr/lib/modules/$(uname -r)/vmlinuz && mv -f signed-vmlinuz /usr/lib/modules/$(uname -r)/vmlinuz
       - name: Cleanup
         run: |
           rm -f /tmp/MOK.priv
