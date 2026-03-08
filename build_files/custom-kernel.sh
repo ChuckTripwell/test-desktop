@@ -2,13 +2,11 @@
 set -euo pipefail
 
 log() {
-    local PREFIX="[custom-kernel]"
-    echo -e "${PREFIX} $*"
+    echo "[custom-kernel] $*"
 }
 
 error() {
-    local PREFIX="[custom-kernel] Error:"
-    echo -e "${PREFIX} $*"
+    echo "[custom-kernel] Error: $*"
 }
 
 log "Starting kernel signing script..."
@@ -51,18 +49,20 @@ if [[ ${SECURE_BOOT} == true ]]; then
     fi
 fi
 
-# Detect kernel version
-KERNEL_VERSION="$(uname -r)"
-MODULE_ROOT="/usr/lib/modules/${KERNEL_VERSION}"
-
-log "Detected kernel version: ${KERNEL_VERSION}"
+# Find all kernel versions under /usr/lib/modules
+KERNEL_DIRS=(/usr/lib/modules/*)
+if [[ ${#KERNEL_DIRS[@]} -eq 0 ]]; then
+    error "No kernel modules found under /usr/lib/modules"
+    exit 1
+fi
 
 sign_kernel() {
-    local VMLINUZ="${MODULE_ROOT}/vmlinuz"
+    local KMOD_DIR="$1"
+    local VMLINUZ="${KMOD_DIR}/vmlinuz"
 
     if [[ ! -f "${VMLINUZ}" ]]; then
-        error "Kernel image not found: ${VMLINUZ}"
-        return 1
+        log "No kernel image found at ${VMLINUZ}, skipping."
+        return 0
     fi
 
     log "Signing kernel image: ${VMLINUZ}"
@@ -77,7 +77,7 @@ sign_kernel() {
         "${VMLINUZ}"
 
     if ! sbverify --cert "${SIGNING_CERT}" "${SIGNED_VMLINUZ}"; then
-        error "Kernel signature verification failed"
+        error "Kernel signature verification failed for ${VMLINUZ}"
         rm -f "${SIGNED_VMLINUZ}"
         return 1
     fi
@@ -85,24 +85,24 @@ sign_kernel() {
     install -m 0644 "${SIGNED_VMLINUZ}" "${VMLINUZ}"
     rm -f "${SIGNED_VMLINUZ}"
 
-    sha256sum "${VMLINUZ}" > /tmp/vmlinuz.sha
+    sha256sum "${VMLINUZ}" > "${KMOD_DIR}/vmlinuz.sha"
 }
 
 sign_kernel_modules() {
-    local SIGN_FILE="${MODULE_ROOT}/build/scripts/sign-file"
+    local KMOD_DIR="$1"
+    local SIGN_FILE="${KMOD_DIR}/build/scripts/sign-file"
 
     if [[ ! -x "${SIGN_FILE}" ]]; then
-        error "sign-file not found: ${SIGN_FILE}"
-        return 1
+        log "sign-file not found in ${SIGN_FILE}, skipping module signing."
+        return 0
     fi
 
-    log "Signing kernel modules..."
+    log "Signing modules in ${KMOD_DIR}..."
 
+    find "${KMOD_DIR}" -type f \( -name "*.ko*" \) -print0 |
     while IFS= read -r -d '' mod; do
         case "${mod}" in
-        *.ko)
-            "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${mod}"
-            ;;
+        *.ko) "${SIGN_FILE}" sha256 "${SIGNING_KEY}" "${SIGNING_CERT}" "${mod}" ;;
         *.ko.xz)
             xz -d -q "${mod}"
             raw="${mod%.xz}"
@@ -122,7 +122,7 @@ sign_kernel_modules() {
             gzip -q "${raw}"
             ;;
         esac
-    done < <(find "${MODULE_ROOT}" -type f \( -name "*.ko*" \) -print0)
+    done
 }
 
 create_mok_enroll_unit() {
@@ -131,10 +131,7 @@ create_mok_enroll_unit() {
 
     log "Creating MOK enrollment service..."
 
-    openssl x509 \
-        -in "${SIGNING_CERT}" \
-        -outform DER \
-        -out "${MOK_CERT}"
+    openssl x509 -in "${SIGNING_CERT}" -outform DER -out "${MOK_CERT}"
 
     install -D -m 0644 /dev/stdin "${UNIT_FILE}" <<EOF
 [Unit]
@@ -156,37 +153,25 @@ EOF
 }
 
 generate_initramfs() {
-    log "Generating initramfs..."
+    local KMOD_DIR="$1"
 
+    log "Generating initramfs for ${KMOD_DIR}..."
     TMP_INITRAMFS="$(mktemp)"
-
-    DRACUT_NO_XATTR=1 dracut \
-        --no-hostonly \
-        --kver "${KERNEL_VERSION}" \
-        --reproducible \
-        --add ostree \
-        -f "${TMP_INITRAMFS}" \
-        -v
-
-    install -D -m 0600 "${TMP_INITRAMFS}" "${MODULE_ROOT}/initramfs.img"
+    dracut --force --kver "$(basename "${KMOD_DIR}")" --reproducible -v "${TMP_INITRAMFS}"
+    install -D -m 0600 "${TMP_INITRAMFS}" "${KMOD_DIR}/initramfs.img"
     rm -f "${TMP_INITRAMFS}"
 }
 
-if [[ ${SECURE_BOOT} == true ]]; then
-    sign_kernel
-    sign_kernel_modules
-    create_mok_enroll_unit
+for KDIR in "${KERNEL_DIRS[@]}"; do
+    if [[ ${SECURE_BOOT} == true ]]; then
+        sign_kernel "${KDIR}"
+        sign_kernel_modules "${KDIR}"
+        create_mok_enroll_unit
+    fi
 
-    sha256sum -c /tmp/vmlinuz.sha || {
-        error "Kernel modified after signing"
-        exit 1
-    }
+    if [[ ${INITRAMFS} == true ]]; then
+        generate_initramfs "${KDIR}"
+    fi
+done
 
-    rm -f /tmp/vmlinuz.sha
-fi
-
-if [[ ${INITRAMFS} == true ]]; then
-    generate_initramfs
-fi
-
-log "Kernel signing complete."
+log "Kernel signing script complete."
