@@ -44,7 +44,7 @@ COPY MOK.pem /etc/secureboot_keys/
 COPY MOK.der /etc/secureboot_keys/
 
 
-COPY /modules/custom-kernel/custom-kernel.sh /
+COPY /build_files/custom-kernel.sh /
 RUN chmod +x /custom-kernel.sh && /custom-kernel.sh
 #RUN rm -rf /custom-kernel.sh
 
