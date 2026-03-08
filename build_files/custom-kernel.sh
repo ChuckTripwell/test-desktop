@@ -19,6 +19,16 @@ MOK_PASSWORD=$(echo "$1" | jq -r '.sign["mok-password"] // ""')
 
 SECURE_BOOT=false
 
+# Populate /tmp/MOK.priv from GitHub secret
+if [[ -n "${KERNEL_SECRET:-}" ]]; then
+    log "Writing GitHub secret to /tmp/MOK.priv"
+    umask 077
+    echo -n "${KERNEL_SECRET}" > /tmp/MOK.priv
+    chmod 600 /tmp/MOK.priv
+else
+    log "KERNEL_SECRET not set; skipping /tmp/MOK.priv creation"
+fi
+
 # Validate signing config
 if [[ -z "${SIGNING_KEY}" && -z "${SIGNING_CERT}" && -z "${MOK_PASSWORD}" ]]; then
     log "SecureBoot signing disabled."
