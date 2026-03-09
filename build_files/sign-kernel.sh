@@ -1,23 +1,25 @@
 #!/bin/bash
 set -e
 
-# Config
+# Setup paths
 MOK_CERT_PEM="/usr/share/pki/MOK.pem"
 MOK_CERT_DER="/usr/share/pki/MOK.der"
 MOK_PRIV="/tmp/MOK.priv"
 MOK_PASSWORD="universalblue"
+SECRET_MOUNT="/run/secrets/KERNEL_SECRET"
 
-echo "Checking for secret mount..."
-if [ ! -f "$KERNEL_SECRET_PATH" ]; then
-    echo "Error: KERNEL_SECRET_PATH not found. Check your GitHub Action 'secrets' input."
+echo "Locating secret..."
+if [ -f "$SECRET_MOUNT" ]; then
+    cp "$SECRET_MOUNT" "$MOK_PRIV"
+    chmod 600 "$MOK_PRIV"
+else
+    echo "Error: Secret not found at $SECRET_MOUNT."
+    echo "Existing secrets:"
+    ls -la /run/secrets 2>/dev/null || echo "/run/secrets/ does not exist."
     exit 1
 fi
 
-# 1. Temporarily extract the key
-cp "$KERNEL_SECRET_PATH" "$MOK_PRIV"
-chmod 600 "$MOK_PRIV"
-
-# 2. Find Kernel (OSTree style)
+# Find Kernel Version (OSTree-safe)
 KERNEL_VERSION=$(ls /usr/lib/modules | head -n 1)
 VMLINUZ="/usr/lib/modules/${KERNEL_VERSION}/vmlinuz"
 
@@ -25,7 +27,7 @@ echo "Signing kernel: $KERNEL_VERSION"
 sbsign --key "$MOK_PRIV" --cert "$MOK_CERT_PEM" --output "${VMLINUZ}.signed" "$VMLINUZ"
 mv "${VMLINUZ}.signed" "$VMLINUZ"
 
-# 3. Create Enrollment Service
+# Create Enrollment Service
 cat <<EOF > /usr/lib/systemd/system/enroll-mok.service
 [Unit]
 Description=Enroll MOK key on first boot
@@ -42,10 +44,10 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 EOF
 
-# 4. Enable it
+# Enable the service
 mkdir -p /usr/lib/systemd/system/multi-user.target.wants
 ln -sf /usr/lib/systemd/system/enroll-mok.service /usr/lib/systemd/system/multi-user.target.wants/enroll-mok.service
 
-# 5. Cleanup
+# Cleanup
 rm -f "$MOK_PRIV"
-echo "Kernel signing complete."
+echo "Done."
