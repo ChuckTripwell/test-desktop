@@ -54,20 +54,16 @@ RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
 
 
-# 1. Define the secret as an argument
-ARG KERNEL_SECRET
+# Copy the public stuff
+COPY build_files/MOK.pem /usr/share/pki/MOK.pem
+COPY build_files/MOK.der /usr/share/pki/MOK.der
+COPY build_files/sign-kernel.sh /usr/local/bin/sign-kernel
 
-# 2. Copy the certs (No leading slash on the source!)
-COPY /build_files/MOK.pem /usr/share/pki/MOK.pem
-COPY /build_files/MOK.der /usr/share/pki/MOK.der
-COPY /build_files/sign-kernel.sh /usr/local/bin/sign-kernel
-
-# 3. Execute the module and immediately wipe the traces
-RUN KERNEL_SECRET="${KERNEL_SECRET}" bash /usr/local/bin/sign-kernel && \
-    rm /usr/local/bin/sign-kernel && \
-    unset KERNEL_SECRET
-
-
+# Securely mount the secret and run the script
+RUN --mount=type=secret,id=KERNEL_SECRET \
+    KERNEL_SECRET_PATH=/run/secrets/KERNEL_SECRET \
+    bash /usr/local/bin/sign-kernel && \
+    rm /usr/local/bin/sign-kernel
 
 
 
