@@ -49,12 +49,18 @@ RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
 ARG KERNEL_SECRET
 ENV KERNEL_SECRET=${KERNEL_SECRET}
+RUN umask 077 \
+    && printf '%s\n' "$KERNEL_SECRET" > /tmp/MOK.priv \
+    && chmod 600 /tmp/MOK.priv
 
 COPY --from="ctx" /MOK.der /usr/share/cert/
 
 COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
 RUN chmod +x /tmp/sign-kernel.sh
-RUN /tmp/sign-kernel.sh
+
+RUN /tmp/sign-kernel.sh \
+    && /tmp/sign-kernel.sh \
+    && rm -f /tmp/MOK.priv
 
 
 
