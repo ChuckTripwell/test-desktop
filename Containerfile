@@ -65,14 +65,9 @@ RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
 
 
-COPY build_files/MOK.der /usr/local/share/ca-certificates/MOK.der
-
 RUN --mount=type=secret,id=KERNEL_SECRET,target=/tmp/MOK.priv \
-    --mount=type=secret,id=MOK_PEM,target=/tmp/MOK.pem \
-    VMLINUZ_PATH=$(ls /usr/lib/modules/*/vmlinuz) && \
-    # sbsign usually uses the PEM for the cert and the PRIV for the key
-    sbsign --key /tmp/MOK.priv --cert /tmp/MOK.pem --output "$VMLINUZ_PATH" "$VMLINUZ_PATH" && \
-    echo "Kernel $VMLINUZ_PATH signed successfully."
+    VMLINUZ_PATH=$(ls /usr/lib/modules/*/vmlinuz | head -n 1) && \
+    sbsign --key /tmp/MOK.priv --cert build_files/MOK.pem --output "$VMLINUZ_PATH" "$VMLINUZ_PATH"
 
 
 
