@@ -47,8 +47,7 @@ COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 # :::::: Run bash scriptcustoms :::::: 
 
 
-
-
+ARG KERNEL_SECRET
 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
