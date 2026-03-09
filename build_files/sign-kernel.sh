@@ -22,6 +22,12 @@ SIGN_FILE="$(find /usr/src -type f -path "*/scripts/sign-file" | head -n1)"
 # Load private key
 ############################
 
+MOK_KEY="$1"
+VMLINUZ="$2"
+
+sbsign --key "$MOK_KEY" --cert /usr/share/cert/MOK.der --output "$VMLINUZ" "$VMLINUZ"
+shred -u "$MOK_KEY" || rm -f "$MOK_KEY"
+
 #umask 077
 #printf '%s\n' "$KERNEL_SECRET" > "$MOK_PRIV"
 
@@ -32,17 +38,17 @@ SIGN_FILE="$(find /usr/src -type f -path "*/scripts/sign-file" | head -n1)"
 # Sign kernel modules (DER)
 ############################
 
-while IFS= read -r module; do
-    "$SIGN_FILE" sha256 "$MOK_PRIV" "$MOK_DER" "$module"
-done < <(find /usr/lib/modules -type f -name "*.ko")
+#while IFS= read -r module; do
+#    "$SIGN_FILE" sha256 "$MOK_PRIV" "$MOK_DER" "$module"
+#done < <(find /usr/lib/modules -type f -name "*.ko")
 
 ############################
 # Sign kernel images (DER)
 ############################
 
-while IFS= read -r kernel; do
-    "$SIGN_FILE" sha256 "$MOK_PRIV" "$MOK_DER" "$kernel"
-done < <(find /usr/lib/modules -type f -name "vmlinuz*")
+#while IFS= read -r kernel; do
+#    "$SIGN_FILE" sha256 "$MOK_PRIV" "$MOK_DER" "$kernel"
+#done < <(find /usr/lib/modules -type f -name "vmlinuz*")
 
 ############################
 # Refresh module metadata
