@@ -54,15 +54,26 @@ RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
 
 
-COPY build_files/MOK.pem /usr/share/pki/MOK.pem
-COPY build_files/MOK.der /usr/share/pki/MOK.der
-COPY build_files/sign-kernel.sh /usr/local/bin/sign-kernel
 
-# Define the path variable right here so the script knows where to look
-RUN --mount=type=secret,id=KERNEL_SECRET \
-    KERNEL_SECRET_PATH=/run/secrets/KERNEL_SECRET \
-    bash /usr/local/bin/sign-kernel && \
-    rm /usr/local/bin/sign-kernel
+
+#RUN --mount=type=secret,id=KERNEL_SECRET,target=/tmp/MOK.priv \
+#    VMLINUZ_PATH=$(ls /usr/lib/modules/*/vmlinuz) && \
+#    sbsign --key /tmp/MOK.priv --cert /path/to/your/MOK.der --output "$VMLINUZ_PATH" "$VMLINUZ_PATH" && \
+#    echo "Successfully signed $VMLINUZ_PATH"
+
+
+
+
+
+COPY build_files/MOK.der /usr/local/share/ca-certificates/MOK.der
+
+RUN --mount=type=secret,id=KERNEL_SECRET,target=/tmp/MOK.priv \
+    --mount=type=secret,id=MOK_PEM,target=/tmp/MOK.pem \
+    VMLINUZ_PATH=$(ls /usr/lib/modules/*/vmlinuz) && \
+    # sbsign usually uses the PEM for the cert and the PRIV for the key
+    sbsign --key /tmp/MOK.priv --cert /tmp/MOK.pem --output "$VMLINUZ_PATH" "$VMLINUZ_PATH" && \
+    echo "Kernel $VMLINUZ_PATH signed successfully."
+
 
 
 
