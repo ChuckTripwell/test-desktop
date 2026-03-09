@@ -45,18 +45,15 @@ COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
 
 # :::::: Run bash scriptcustoms :::::: 
-
+RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
 ARG KERNEL_SECRET
-
-RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
+ENV KERNEL_SECRET=${KERNEL_SECRET}
 
 COPY --from="ctx" /MOK.der /usr/share/cert/
 
 COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
-
 RUN chmod +x /tmp/sign-kernel.sh
-
 RUN /tmp/sign-kernel.sh
 
 
