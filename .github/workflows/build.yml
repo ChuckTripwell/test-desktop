@@ -106,7 +106,10 @@ jobs:
           oci: false
           build-args: |
             KERNEL_SECRET=${{ secrets.KERNEL_SECRET }}
-            MOK_PEM=${{ secrets.MOK_PEM }}           
+            MOK_PEM=${{ secrets.MOK_PEM }}
+          env:
+          KERNEL_SECRET: ${{ secrets.KERNEL_SECRET }}
+          MOK_PEM: ${{ secrets.MOK_PEM }}
 
       # Rechunk is a script that we use on Universal Blue to make sure there isnt a single huge layer when your image gets published.
       # This does not make your image faster to download, just provides better resumability and fixes a few errors.
