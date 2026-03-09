@@ -52,6 +52,8 @@ COPY MOK.priv /tmp/MOK.priv
 RUN chmod 600 /tmp/MOK.priv
 
 COPY --from="ctx" /MOK.der /usr/share/cert/
+COPY --from="ctx" /MOK.pem /usr/share/cert/
+
 
 COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
 RUN chmod +x /tmp/sign-kernel.sh
