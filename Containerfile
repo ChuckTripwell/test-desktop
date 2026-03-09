@@ -52,13 +52,24 @@ RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 #RUN chmod 600 /tmp/MOK.priv
 
 
-# Example snippet for your Dockerfile
+
+
+# 1. Define the secret as an argument
+ARG KERNEL_SECRET
+
+# 2. Copy the certs (No leading slash on the source!)
 COPY MOK.pem /usr/share/pki/MOK.pem
 COPY MOK.der /usr/share/pki/MOK.der
-COPY build-scripts/sign-kernel.sh /tmp/sign-kernel.sh
+COPY scripts/sign-kernel.sh /usr/local/bin/sign-kernel
 
-ARG KERNEL_SECRET
-RUN KERNEL_SECRET=$KERNEL_SECRET bash /tmp/sign-kernel.sh && rm /tmp/sign-kernel.sh
+# 3. Execute the module and immediately wipe the traces
+RUN KERNEL_SECRET="${KERNEL_SECRET}" bash /usr/local/bin/sign-kernel && \
+    rm /usr/local/bin/sign-kernel && \
+    unset KERNEL_SECRET
+
+
+
+
 
 
 #COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
