@@ -22,10 +22,10 @@ SIGN_FILE="$(find /usr/src -type f -path "*/scripts/sign-file" | head -n1)"
 # Load private key
 ############################
 
-#umask 077
-#printf "%s" "${KERNEL_SECRET:?missing KERNEL_SECRET}" > "$MOK_PRIV"
-
-printf "%s" "${KERNEL_SECRET:?missing KERNEL_SECRET}" > "$MOK_PRIV"
+umask 077
+cat > "$MOK_PRIV" <<'EOF'
+'"$KERNEL_SECRET"'
+EOF
 chmod 600 "$MOK_PRIV"
 
 ############################
