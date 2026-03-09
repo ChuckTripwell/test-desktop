@@ -49,14 +49,6 @@ RUN mkdir -p /usr/share/cert/
 COPY MOK.pem /usr/share/cert/
 COPY MOK.der /usr/share/cert/
 
-
-COPY /build_files/custom-kernel.sh /
-RUN chmod +x /custom-kernel.sh && /custom-kernel.sh /etc/secureboot_keys/MOK.der /etc/secureboot_keys/MOK.pem "universalblue" false
-#RUN rm -rf /custom-kernel.sh
-
-
-
-
 RUN echo '[Unit]' > /etc/systemd/system/add-mok-key.service
 RUN echo 'Description=Add MOK Key Using mokutil' >> /etc/systemd/system/add-mok-key.service
 RUN echo 'After=local-fs.target' >> /etc/systemd/system/add-mok-key.service
