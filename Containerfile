@@ -33,66 +33,8 @@ RUN rm -rf /lib/modules
 COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
-
-
-
-
-
-
-
-
-
-
-
-# :::::: Run bash scriptcustoms :::::: 
-RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
-
-#ARG KERNEL_SECRET
-#COPY MOK.priv /tmp/MOK.priv
-#RUN chmod 600 /tmp/MOK.priv
-
-
-
-
-
-
-#RUN --mount=type=secret,id=KERNEL_SECRET,target=/tmp/MOK.priv \
-#    VMLINUZ_PATH=$(ls /usr/lib/modules/*/vmlinuz) && \
-#    sbsign --key /tmp/MOK.priv --cert /path/to/your/MOK.der --output "$VMLINUZ_PATH" "$VMLINUZ_PATH" && \
-#    echo "Successfully signed $VMLINUZ_PATH"
-
-
-
-
-
-
-
-
-
-COPY build_files/ /build_files/
-
-RUN --mount=type=secret,id=KERNEL_SECRET \
-    VMLINUZ_PATH=$(ls /usr/lib/modules/*/vmlinuz | head -n 1) && \
-    # Decode the secret mount to the actual file path needed
-    base64 -d /run/secrets/KERNEL_SECRET > /tmp/MOK.priv && \
-    # Sign the kernel
-    sbsign --key /tmp/MOK.priv --cert /build_files/MOK.pem --output "$VMLINUZ_PATH" "$VMLINUZ_PATH" && \
-    # Clean up the decoded file immediately within the same layer
-    rm /tmp/MOK.priv
-
-RUN rm -rf /build_files
-
-
-
-
-
-
-
-
-
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 RUN dnf5 -y install rpmdevtools akmods
-
 
 
 
