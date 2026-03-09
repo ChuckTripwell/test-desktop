@@ -15,8 +15,8 @@ SIGN_FILE="$(find /usr/src -type f -path "*/scripts/sign-file" | head -n1)"
 # Install certs
 ############################
 
-install -dm755 /usr/share/cert
-install -m644 MOK.der "$MOK_DER"
+#install -dm755 /usr/share/cert
+#install -m644 MOK.der "$MOK_DER"
 
 ############################
 # Load private key
