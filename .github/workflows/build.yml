@@ -96,6 +96,7 @@ jobs:
         run: |
           printf "%s" "$KERNEL_SECRET" > /tmp/MOK.priv
           chmod 600 /tmp/MOK.priv
+          chmod +x ./build_files/sign-kernel.sh
           ./build_files/sign-kernel.sh /tmp/MOK.priv /usr/lib/modules/*/vmlinuz
         env:
           KERNEL_SECRET: ${{ secrets.KERNEL_SECRET }}
