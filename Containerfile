@@ -41,12 +41,16 @@ COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
 
 
+
+
+# :::::: Run bash scriptcustoms :::::: 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
-# :::::: Run bash scripts :::::: 
-COPY --from="ctx" /custom-kernel.sh /tmp/
-RUN chmod +x /tmp/custom-kernel.sh
-RUN sh /tmp/custom-kernel.sh
+COPY --from="ctx" /MOK.der /usr/share/cert/
+
+COPY --from="ctx" /sign-kernel.sh /tmp/
+RUN chmod +x /tmp/sign-kernel.sh
+RUN sh /tmp/sign-kernel.sh
 
 
 
