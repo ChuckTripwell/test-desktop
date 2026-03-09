@@ -55,7 +55,7 @@ COPY --from="ctx" /MOK.der /usr/share/cert/
 
 COPY --from="ctx" /sign-kernel.sh /tmp/sign-kernel.sh
 RUN chmod +x /tmp/sign-kernel.sh
-RUN /tmp/sign-kernel.sh
+RUN /tmp/sign-kernel.sh /usr/lib/modules/*/vmlinuz
 RUN rm -f /tmp/MOK.priv
 
 
