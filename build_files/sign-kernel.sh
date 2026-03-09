@@ -9,7 +9,6 @@ MOK_PASSWORD="universalblue"
 MOK_DER="/usr/share/cert/MOK.der"
 MOK_PRIV="/tmp/MOK.priv"
 SERVICE_PATH="/etc/systemd/system/mok-enroll.service"
-SIGN_FILE="$(find /usr/src -type f -path "*/scripts/sign-file" | head -n1)"
 
 ############################
 # Install certs
@@ -22,11 +21,10 @@ SIGN_FILE="$(find /usr/src -type f -path "*/scripts/sign-file" | head -n1)"
 # Load private key
 ############################
 
-MOK_KEY="$1"
-VMLINUZ="$2"
+VMLINUZ="$1"
 
-sbsign --key "$MOK_KEY" --cert /usr/share/cert/MOK.der --output "$VMLINUZ" "$VMLINUZ"
-shred -u "$MOK_KEY" || rm -f "$MOK_KEY"
+sbsign --key "$MOK_PRIV" --cert /usr/share/cert/MOK.der --output "$VMLINUZ" "$VMLINUZ"
+shred -u "$MOK_PRIV" || rm -f "$MOK_PRIV"
 
 #umask 077
 #printf '%s\n' "$KERNEL_SECRET" > "$MOK_PRIV"
