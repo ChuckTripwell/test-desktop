@@ -35,6 +35,7 @@ COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
 
 # :::::: SecureBoot stuff ::::::
+RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 RUN mkdir -p /usr/share/cert
 COPY MOK.priv /tmp/cert/MOK.priv
 COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
