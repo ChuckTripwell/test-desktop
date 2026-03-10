@@ -33,6 +33,11 @@ RUN rm -rf /lib/modules
 COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
+RUN mkdir -p /usr/share/cert
+COPY MOK.priv /tmp/cert/MOK.priv
+COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
+
+
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 RUN dnf5 -y install rpmdevtools akmods
 
@@ -44,7 +49,6 @@ RUN dnf5 -y install rpmdevtools akmods
 
 # :::::: SecureBoot stuff :::::: 
 
-RUN mkdir -p /usr/share/cert
 
 #RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
 
