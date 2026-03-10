@@ -14,7 +14,6 @@ RUN rm -rf /lib/modules/*
 RUN pacman -Sy --noconfirm
 RUN pacman -S --noconfirm linux-cachyos-nvidia-open linux-cachyos-headers
 
-
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
 ##################################################################################################################################################
@@ -33,49 +32,8 @@ RUN rm -rf /lib/modules
 COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
 
-
-# :::::: SecureBoot stuff ::::::
-RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
-RUN mkdir -p /usr/share/cert
-COPY MOK.priv /tmp/cert/MOK.priv
-COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
-COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
-RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
-
-
-
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 RUN dnf5 -y install rpmdevtools akmods
-
-
-# :::::: SecureBoot stuff :::::: 
-
-
-#RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
-
-#RUN mkdir -p /usr/share/cert/
-#COPY MOK.pem /usr/share/cert/
-#COPY MOK.der /usr/share/cert/
-
-#RUN echo '[Unit]' > /etc/systemd/system/add-mok-key.service
-#RUN echo 'Description=Add MOK Key Using mokutil' >> /etc/systemd/system/add-mok-key.service
-#RUN echo 'After=local-fs.target' >> /etc/systemd/system/add-mok-key.service
-#RUN echo '' >> /etc/systemd/system/add-mok-key.service
-#RUN echo '[Service]' >> /etc/systemd/system/add-mok-key.service
-#RUN echo 'Type=oneshot' >> /etc/systemd/system/add-mok-key.service
-#RUN echo 'mokutil --timeout -1 & echo -e "universalblue\nuniversalblue" | mokutil --import /etc/secureboot_keys/MOK.der' >> /etc/systemd/system/add-mok-key.service
-#RUN echo 'RemainAfterExit=yes' >> /etc/systemd/system/add-mok-key.service
-#RUN echo '' >> /etc/systemd/system/add-mok-key.service
-#RUN echo '[Install]' >> /etc/systemd/system/add-mok-key.service
-#RUN echo 'WantedBy=multi-user.target' >> /etc/systemd/system/add-mok-key.service
-
-#RUN systemctl enable /etc/systemd/system/add-mok-key.service
-
-
-
-
-
-
 
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
@@ -90,6 +48,15 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install python3-pygame
+
+# :::::: SecureBoot stuff ::::::
+RUN dnf5 -y install --allowerasing mokutil sbsigntools jq
+RUN mkdir -p /usr/share/cert
+COPY MOK.priv /tmp/cert/MOK.priv
+COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
+COPY --from=ctx MOK.pem /etc/pki/akmods/certs/akmods-ublue.der
+COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
+RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
