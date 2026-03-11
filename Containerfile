@@ -49,9 +49,6 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install python3-pygame
 
-# :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-RUN dnf5 -y install rpmdevtools akmods
-
 # :::::: SecureBoot stuff ::::::
 RUN dnf5 -y install --allowerasing mokutil sbsigntools
 RUN mkdir -p /usr/share/cert
@@ -59,6 +56,9 @@ COPY MOK.priv /tmp/cert/MOK.priv
 COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
 COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
+
+# :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
+RUN dnf5 -y install rpmdevtools akmods
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
