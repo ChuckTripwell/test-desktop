@@ -55,7 +55,9 @@ RUN mkdir -p /usr/share/cert
 COPY MOK.priv /tmp/cert/MOK.priv
 COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
 COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
+COPY --from=ctx sign-nvidia.sh /tmp/sign-nvidia.sh
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
+RUN chmod +x /tmp/sign-nvidia.sh
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 RUN dnf5 -y install rpmdevtools akmods
