@@ -72,7 +72,6 @@ RUN chmod +x /tmp/sign-akmods.sh && /tmp/sign-akmods.sh
 #RUN dracut -force --kver $(ls /usr/lib/modules/*)
 
 RUN dnf5 install -y --allowerasing kernel-devel
-RUN dnf5 install -y --allowerasing akmod-nvidia
 RUN dnf5 install -y --allowerasing gcc make elfutils-libelf-devel \
  && KVER=$(ls /usr/lib/modules | head -n1) \
  && ln -sf /usr/src/kernels/$KVER /usr/lib/modules/$KVER/build \
