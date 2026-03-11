@@ -12,7 +12,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 # :::::: prepare the kernel :::::: 
 RUN rm -rf /lib/modules/*
 RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm linux-cachyos-nvidia-open linux-cachyos-headers nvidia-open-dkms
+RUN pacman -S --noconfirm linux-cachyos-nvidia-open
 
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
@@ -28,16 +28,20 @@ RUN touch /usr/share/distrobox/distrobox.conf
 RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
 
 # :::::: forcefully remove and replace kernel :::::: 
-RUN rm -rf /lib/modules
 RUN rm -rf /usr/lib/modules
 COPY --from=cachyos /usr/lib/modules /usr/lib/modules
 COPY --from=cachyos /usr/share/licenses/ /usr/share/licenses/
+
+# ...?
+RUN cd /usr/lib/modules/*/ && ln -s ./extramodules ./extra
 
 # test for grub signing
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-#RUN dnf5 -y install --allowerasing install rpmdevtools akmods
+RUN dnf5 -y install --allowerasing install rpmdevtools akmods
+# ...
+RUN dracut --force
 
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
@@ -52,9 +56,6 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install --allowerasing install python3-pygame
-
-# ...
-RUN dracut --force
 
 # :::::: SecureBoot stuff ::::::
 RUN dnf5 -y install --allowerasing mokutil sbsigntools
