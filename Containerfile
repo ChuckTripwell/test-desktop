@@ -12,7 +12,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 # :::::: prepare the kernel :::::: 
 RUN rm -rf /lib/modules/*
 RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm dracut linux-cachyos-rc-lto-nvidia linux-cachyos-rc-lto-headers
+RUN pacman -S --noconfirm linux-cachyos-rc-lto-nvidia
 
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
