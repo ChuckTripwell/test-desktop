@@ -70,13 +70,13 @@ RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 
 # :::::: SecureBoot stuff :::::: 
-RUN dnf5 -y install --allowerasing mokutil sbsigntools
-RUN mkdir -p /usr/share/cert
-RUN mkdir -p /tmp/cert
-COPY MOK.priv /tmp/cert/MOK.priv
-OPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
-COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
-RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
+#RUN dnf5 -y install --allowerasing mokutil sbsigntools
+#RUN mkdir -p /usr/share/cert
+#RUN mkdir -p /tmp/cert
+#COPY MOK.priv /tmp/cert/MOK.priv
+#OPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
+#COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
+#RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 
 #COPY --from=ctx sign-akmods.sh /tmp/sign-akmods.sh 
 #RUN chmod +x /tmp/sign-akmods.sh && /tmp/sign-akmods.sh 
