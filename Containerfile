@@ -58,6 +58,8 @@ COPY --from='cachyos' /usr/share/cert /usr/share/cert
 
 COPY --from='cachyos' /usr/lib/systemd/system/mok-enroll.service /usr/lib/systemd/system/mok-enroll.service
 
+COPY --from='cachyos' /usr/src /usr/src
+
 RUN systemctl enable mok-enroll.service
 
 
