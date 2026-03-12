@@ -75,11 +75,19 @@ RUN dnf5 -y install --allowerasing kernel-devel
 
 
 
-RUN KERNEL_NAME=$(ls /usr/lib/modules | sort -V | tail -n1) && \
-    echo "Building Nvidia drivers for ${KERNEL_NAME}" && \
-    akmods --force --kernels "${KERNEL_NAME}" && \
-    dracut --kver "${KERNEL_NAME}" -f /tmp/initramfs.img && \
-    rm -rf /var/cache/akmods
+
+RUN KERNEL_NAME=$(ls /usr/lib/modules | sort -V | tail -n 1) && \
+    KERNEL_SRC="/usr/lib/modules/${KERNEL_NAME}/build" && \
+    # Extract the nvidia source (usually found in /usr/src/nvidia-*)
+    # and run the installer in 'no-kernel-module-source' mode
+    ./nvidia-installer \
+      --kernel-name="${KERNEL_NAME}" \
+      --kernel-source-path="${KERNEL_SRC}" \
+      --no-questions --ui=none --silent && \
+    # Now run dracut
+    dracut --kver "${KERNEL_NAME}" -f "/usr/lib/modules/${KERNEL_NAME}/initrd"
+
+
 
 
 
