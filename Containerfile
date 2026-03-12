@@ -17,7 +17,7 @@ RUN pacman -S --noconfirm linux-cachyos-nvidia-open linux-cachyos-headers
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
 ##################################################################################################################################################
-FROM ghcr.io/ublue-os/bazzite-nvidia-open:latest
+FROM ghcr.io/chucktripwell/silvercachy-laptop:latest
 
 # :::::: disable countme ( we always disable it anyway, so this  is to save us time. you can enable it if you want... ) :::::: 
 RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
@@ -33,10 +33,10 @@ COPY --from=cachyos /usr/lib/modules /usr/lib/modules
 COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
 # test for grub signing
-RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
+#RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-RUN dnf5 -y install --allowerasing install rpmdevtools akmods jq
+RUN dnf5 -y install --allowerasing install rpmdevtools akmods
 
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
@@ -45,24 +45,22 @@ RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility
 RUN echo "kernel.sched_migration_cost_ns=5000000" >> /etc/sysctl.d/80-gamecompatibility.conf
 
 # :::::: install preformence-related stuff :::::: 
-RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
-RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
-RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
+#RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
+#RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
+#RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install --allowerasing install python3-pygame
 
 # :::::: SecureBoot stuff :::::: 
-RUN dnf5 -y install --allowerasing mokutil sbsigntools
-#
-RUN mkdir -p /usr/share/cert
+#RUN dnf5 -y install --allowerasing mokutil sbsigntools
+#RUN mkdir -p /usr/share/cert
+RUN mkdir -p /tmp/cert
 COPY MOK.priv /tmp/cert/MOK.priv
-#
-COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
-#
+#COPY --from=ctx MOK.pem /usr/share/cert/MOK.pem
 COPY --from=ctx sign-kernel.sh /tmp/sign-kernel.sh 
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
-#
+
 #COPY --from=ctx sign-akmods.sh /tmp/sign-akmods.sh 
 #RUN chmod +x /tmp/sign-akmods.sh && /tmp/sign-akmods.sh 
 
