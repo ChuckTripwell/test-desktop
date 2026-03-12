@@ -12,7 +12,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 # :::::: prepare the kernel :::::: 
 RUN rm -rf /lib/modules/*
 RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm linux-cachyos-rc-lto
+RUN pacman -S --noconfirm linux-cachyos-lto-nvidia-open
 
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
@@ -77,14 +77,22 @@ RUN dnf5 -y install --allowerasing kernel-devel
 
 
 RUN KERNEL_NAME=$(ls /usr/lib/modules | sort -V | tail -n 1) && \
-    KERNEL_SRC="/usr/lib/modules/${KERNEL_NAME}/build" && \
-    # Extract the nvidia source (usually found in /usr/src/nvidia-*)
-    # and run the installer in 'no-kernel-module-source' mode
-    ./nvidia-installer \
-      --kernel-name="${KERNEL_NAME}" \
-      --kernel-source-path="${KERNEL_SRC}" \
-      --no-questions --ui=none --silent && \
-    # Now run dracut
+    OLD_KVER=$(ls /usr/lib/modules | grep -v "${KERNEL_NAME}" | head -n 1) && \
+    echo "Refreshing Nvidia drivers from ${OLD_KVER} to ${KERNEL_NAME}" && \
+    \
+    # 1. Create the destination directory in the new kernel tree
+    mkdir -p "/usr/lib/modules/${KERNEL_NAME}/extra/nvidia" && \
+    \
+    # 2. Copy the existing pre-compiled modules from the previous kernel
+    # This assumes they were already built into the base image
+    cp /usr/lib/modules/${OLD_KVER}/extra/nvidia/*.ko "/usr/lib/modules/${KERNEL_NAME}/extra/nvidia/" 2>/dev/null || \
+    cp /usr/lib/modules/*/extra/nvidia/*.ko "/usr/lib/modules/${KERNEL_NAME}/extra/nvidia/" || true && \
+    \
+    # 3. Update the module dependency list for the new kernel
+    # This makes the kernel 'aware' of the moved drivers
+    depmod -a "${KERNEL_NAME}" && \
+    \
+    # 4. Refresh the initrd inside the module directory (safe for atomic build)
     dracut --kver "${KERNEL_NAME}" -f "/usr/lib/modules/${KERNEL_NAME}/initrd"
 
 
