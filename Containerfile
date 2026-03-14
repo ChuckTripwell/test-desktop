@@ -15,7 +15,6 @@ FROM ghcr.io/ublue-os/bazzite-nvidia-open:latest
 
 RUN dnf5 -y remove rpmdevtools
 RUN dnf5 -y remove akmods
-RUN dnf5 -y remove kernel-devel-matched
 
 # :::::: disable countme ( we always disable it anyway, so this  is to save us time. you can enable it if you want... ) :::::: 
 RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
@@ -36,7 +35,7 @@ RUN mv $(ls -p | grep -v /tmp/modules/*) /lib/modules/*/
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-RUN dnf5 -y install --allowerasing install rpmdevtools akmods kernel-devel-matched
+RUN dnf5 -y install --allowerasing install rpmdevtools akmods
 
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
