@@ -6,12 +6,12 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 # :::::: prepare the kernel :::::: 
 RUN rm -rf /lib/modules/*
 RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm linux-cachyos linux-cachyos-headers
+RUN pacman -S --noconfirm linux-cachyos-nvidia-open linux-cachyos-headers-nvidia-open
 
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
 ##################################################################################################################################################
-FROM ghcr.io/ublue-os/bazzite:latest
+FROM ghcr.io/ublue-os/bazzite-nvidia-open:latest
 
 # :::::: disable countme ( we always disable it anyway, so this  is to save us time. you can enable it if you want... ) :::::: 
 RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
