@@ -13,9 +13,6 @@ RUN pacman -S --noconfirm linux-cachyos-nvidia-open linux-cachyos-headers
 ##################################################################################################################################################
 FROM ghcr.io/ublue-os/bazzite-nvidia-open:latest
 
-RUN dnf5 -y remove rpmdevtools
-RUN dnf5 -y remove akmods
-
 # :::::: disable countme ( we always disable it anyway, so this  is to save us time. you can enable it if you want... ) :::::: 
 RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
 
@@ -31,9 +28,6 @@ COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
 # test for grub signing
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
-
-# :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-RUN dnf5 -y install --allowerasing install rpmdevtools akmods
 
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
@@ -57,6 +51,9 @@ COPY MOK.priv /tmp/cert/MOK.priv
 COPY build_files/MOK.pem /usr/share/cert/MOK.pem
 COPY build_files/sign-kernel.sh /tmp/sign-kernel.sh 
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
+
+# :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
+RUN dnf5 -y install --allowerasing install rpmdevtools akmods
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
