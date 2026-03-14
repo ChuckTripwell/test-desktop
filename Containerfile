@@ -57,16 +57,6 @@ COPY build_files/MOK.pem /usr/share/cert/MOK.pem
 COPY build_files/sign-kernel.sh /tmp/sign-kernel.sh 
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 
-
-
-
-# test
-RUN rpm-ostree kargs \
-  --append=rd.driver.blacklist=nouveau \
-  --append=modprobe.blacklist=nouveau \
-  --append=nvidia-drm.modeset=1
-
-
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
 RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
