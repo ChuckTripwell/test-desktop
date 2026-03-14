@@ -32,7 +32,7 @@ COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-RUN dnf5 -y install --allowerasing install rpmdevtools akmods
+RUN dnf5 -y install --allowerasing install rpmdevtools akmods kernel-devel-matched
 
 # :::::: Set vm.max_map_count for stability/improved gaming performance :::::: 
 # :::::: https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count :::::: 
@@ -56,6 +56,18 @@ COPY MOK.priv /tmp/cert/MOK.priv
 COPY build_files/MOK.pem /usr/share/cert/MOK.pem
 COPY build_files/sign-kernel.sh /tmp/sign-kernel.sh 
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
+
+
+
+
+# test
+RUN akmods --force && depmod -a
+
+RUN rpm-ostree kargs \
+  --append=rd.driver.blacklist=nouveau \
+  --append=modprobe.blacklist=nouveau \
+  --append=nvidia-drm.modeset=1
+
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
