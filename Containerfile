@@ -22,8 +22,8 @@ RUN touch /usr/share/distrobox/distrobox.conf
 RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
 
 # :::::: forcefully remove and replace kernel :::::: 
-RUN rm -rf /usr/lib/modules
-COPY --from=cachyos /usr/lib/modules /usr/lib/modules
+RUN rm -rf /lib/modules
+COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
 # test for grub signing
