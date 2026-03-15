@@ -45,9 +45,8 @@ RUN dnf5 -y install --allowerasing install python3-pygame
 
 # :::::: Fix Nvidia GPU :::::: 
 RUN mkdir -p /etc/modprobe.d/
-RUN echo "blacklist nouveau" > /etc/modprobe.d/blacklist-nvidia-nouveau.conf && \
-    echo "options nouveau modeset=0" >> /etc/modprobe.d/blacklist-nvidia-nouveau.conf && \
-    update-initramfs -u
+RUN echo "blacklist nouveau" >> /etc/modprobe.d/blacklist-nvidia-nouveau.conf
+RUN echo "options nouveau modeset=0" >> /etc/modprobe.d/blacklist-nvidia-nouveau.conf
 
 # :::::: SecureBoot stuff :::::: 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools
