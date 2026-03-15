@@ -43,10 +43,13 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install --allowerasing install python3-pygame
 
-# :::::: Fix Nvidia GPU :::::: 
-RUN mkdir -p /etc/modprobe.d/
-RUN echo "blacklist nouveau" >> /etc/modprobe.d/blacklist-nvidia-nouveau.conf
-RUN echo "options nouveau modeset=0" >> /etc/modprobe.d/blacklist-nvidia-nouveau.conf
+# :::::: Fix Nvidia GPU ..? :::::: 
+RUN mkdir -p /etc/modprobe.d
+RUN echo "blacklist nouveau" >> blacklist-nouveau.conf
+RUN echo "blacklist lbm-nouveau" >> blacklist-nouveau.conf
+RUN echo "options nouveau modeset=0" >> blacklist-nouveau.conf
+RUN echo "alias nouveau off" >> blacklist-nouveau.conf
+RUN echo "alias lbm-nouveau off" >> blacklist-nouveau.conf
 
 # :::::: SecureBoot stuff :::::: 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools
