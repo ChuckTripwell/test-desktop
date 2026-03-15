@@ -44,7 +44,21 @@ RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
 RUN dnf5 -y install --allowerasing install python3-pygame
 
 # :::::: Force Nvidia GPU :::::: 
-RUN rpm-ostree kargs --append-if-missing=nvidia-drm.modeset=1
+RUN echo "[Unit]" > /etc/systemd/system/enable-nvidia-drm.service
+RUN echo "Description=Enable NVIDIA DRM Modeset" >> /etc/systemd/system/enable-nvidia-drm.service
+RUN echo "After=network.target" >> /etc/systemd/system/enable-nvidia-drm.service
+RUN echo "" >> /etc/systemd/system/enable-nvidia-drm.service
+RUN echo "[Service]" >> /etc/systemd/system/enable-nvidia-drm.service
+RUN echo "Type=oneshot" >> /etc/systemd/system/enable-nvidia-drm.service
+RUN echo "ExecStart=/usr/bin/rpm-ostree kargs --append-if-missing=nvidia-drm.modeset=1" >> /etc/systemd/system/enable-nvidia-drm.service
+RUN echo "RemainAfterExit=yes" >> /etc/systemd/system/enable-nvidia-drm.service
+RUN echo "User=root" >> /etc/systemd/system/enable-nvidia-drm.service
+RUN echo "" >> /etc/systemd/system/enable-nvidia-drm.service
+RUN echo "[Install]" >> /etc/systemd/system/enable-nvidia-drm.service
+RUN echo "WantedBy=multi-user.target" >> /etc/systemd/system/enable-nvidia-drm.service
+
+# Enable the service
+RUN systemctl enable enable-nvidia-drm.service
 
 # :::::: SecureBoot stuff :::::: 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools
