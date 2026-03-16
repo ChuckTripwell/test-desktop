@@ -28,7 +28,7 @@ COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
 
 # ???
-RUN cd /tmp && wget https://raw.githubusercontent.com/ublue-os/bazzite/refs/heads/main/build_files/install-nvidia && chmod +x ./install-nvidia && export $IMAGE_NAME=open && export BASE_IMAGE_NAME=kinoite sh && ./install-nvidia
+RUN cd /tmp && wget https://raw.githubusercontent.com/ublue-os/bazzite/refs/heads/main/build_files/install-nvidia && chmod +x ./install-nvidia && export IMAGE_NAME=open && export BASE_IMAGE_NAME=kinoite sh && ./install-nvidia
 
 
 # test for grub signing
