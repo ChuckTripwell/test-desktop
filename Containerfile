@@ -46,7 +46,7 @@ RUN dnf5 -y install --allowerasing install python3-pygame
 # :::::: Fix Nvidia GPU ..? :::::: 
 RUN mkdir -p /etc/profile.d
 #
-RUN echo "export SHELL=fish" >> /etc/profile.d/frankengold-base.sh
+RUN echo "export SHELL=/bin/fish" >> /etc/profile.d/frankengold-base.sh
 #
 RUN echo "export __NV_PRIME_RENDER_OFFLOAD=1" >> /etc/profile.d/nvidia.sh
 RUN echo "export __VK_LAYER_NV_optimus=NVIDIA_only" >> /etc/profile.d/nvidia.sh
