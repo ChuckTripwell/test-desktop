@@ -59,11 +59,11 @@ COPY build_files/sign-kernel.sh /tmp/sign-kernel.sh
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-RUN dnf5 -y install --allowerasing install rpmdevtools akmods
+RUN dnf5 -y install --allowerasing install rpmdevtools akmods vulkan-loader vulkan-tools
 
 # libs???
-COPY --from=cachyos /usr/lib64 /usr/lib64
-COPY --from=cachyos /usr/lib /usr/lib
+#COPY --from=cachyos /usr/lib64 /usr/lib64
+#COPY --from=cachyos /usr/lib /usr/lib
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
