@@ -26,10 +26,6 @@ RUN rm -rf /lib/modules/*
 COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
-# libs???
-COPY --from=cachyos /usr/lib64 /usr/lib64
-COPY --from=cachyos /usr/lib /usr/lib
-
 # test for grub signing
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
 
@@ -64,6 +60,10 @@ RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 RUN dnf5 -y install --allowerasing install rpmdevtools akmods
+
+# libs???
+COPY --from=cachyos /usr/lib64 /usr/lib64
+COPY --from=cachyos /usr/lib /usr/lib
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
