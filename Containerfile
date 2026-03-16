@@ -6,7 +6,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 # :::::: prepare the kernel :::::: 
 RUN rm -rf /lib/modules/*
 RUN pacman -Sy --noconfirm
-RUN pacman -S --noconfirm linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers
+RUN pacman -S --noconfirm linux-cachyos-nvidia-open linux-cachyos-headers
 
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
@@ -25,6 +25,11 @@ RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrob
 RUN rm -rf /lib/modules/*
 COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses /usr/share/licenses
+
+
+# ???
+RUN cd /tmp && wget https://raw.githubusercontent.com/ublue-os/bazzite/refs/heads/main/build_files/install-nvidia && chmod +x ./install-nvidia && sh ./install-nvidia
+
 
 # test for grub signing
 RUN ln -s '/usr/lib/grub/i386-pc' '/usr/lib/grub/x86_64-efi'
@@ -59,11 +64,7 @@ COPY build_files/sign-kernel.sh /tmp/sign-kernel.sh
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-RUN dnf5 -y install --allowerasing install rpmdevtools akmods vulkan-loader vulkan-tools
-
-# libs???
-#COPY --from=cachyos /usr/lib64 /usr/lib64
-#COPY --from=cachyos /usr/lib /usr/lib
+RUN dnf5 -y install --allowerasing install rpmdevtools akmods
 
 # :::::: slot the kernel into place :::::: 
 RUN mkdir -p /var/tmp
