@@ -46,11 +46,11 @@ RUN dnf5 -y install --allowerasing install python3-pygame
 # :::::: Fix Nvidia GPU ..? :::::: 
 RUN mkdir -p /etc/profile.d
 #
-RUN echo "SHELL=fish" >> /etc/profile.d/frankengold-base.sh
+RUN echo "export SHELL=fish" >> /etc/profile.d/frankengold-base.sh
 #
-RUN echo "__NV_PRIME_RENDER_OFFLOAD=1" >> /etc/profile.d/nvidia.sh
-RUN echo "__VK_LAYER_NV_optimus=NVIDIA_only" >> /etc/profile.d/nvidia.sh
-RUN echo "__GLX_VENDOR_LIBRARY_NAME=nvidia" >> /etc/profile.d/nvidia.sh
+RUN echo "export __NV_PRIME_RENDER_OFFLOAD=1" >> /etc/profile.d/nvidia.sh
+RUN echo "export __VK_LAYER_NV_optimus=NVIDIA_only" >> /etc/profile.d/nvidia.sh
+RUN echo "export __GLX_VENDOR_LIBRARY_NAME=nvidia" >> /etc/profile.d/nvidia.sh
 
 # :::::: SecureBoot stuff :::::: 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools
