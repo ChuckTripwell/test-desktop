@@ -72,7 +72,7 @@ COPY build_files/MOK.pem /usr/share/cert/MOK.pem
 COPY build_files/sign-kernel.sh /tmp/sign-kernel.sh 
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 
-RUN setsebool -P domain_kernel_load_modules on
+#RUN setsebool -P domain_kernel_load_modules on
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
 # do not move this segment!
