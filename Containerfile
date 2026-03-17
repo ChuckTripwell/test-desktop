@@ -39,7 +39,8 @@ RUN TMPDIR="$(mktemp -d)" && \
     cp -v usr/lib64/VK_hdr_layer/* /usr/lib64/VK_hdr_layer/ && \
     # Vulkan implicit layer
     mkdir -p /usr/share/vulkan/implicit_layer.d && \
-    cp -v /usr/share/vulkan/implicit_layer.d/VkLayer_hdr_wsi.*.json /usr/share/vulkan/implicit_layer.d/ && \
+    mkdir -p /usr/share/vulkan/implicit_layer.d && \
+    cp -v usr/share/vulkan/implicit_layer.d/VkLayer_hdr_wsi.*.json /usr/share/vulkan/implicit_layer.d/ && \
     # License & Docs
     mkdir -p /usr/share/licenses/VK_hdr_layer && \
     cp -v usr/share/licenses/VK_hdr_layer/* /usr/share/licenses/VK_hdr_layer/ && \
