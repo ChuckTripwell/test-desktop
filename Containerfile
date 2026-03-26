@@ -10,21 +10,14 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
   RUN pacman -S --noconfirm linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers
 
 ##################################################################################################################################################
-### :::::: pull os :::::: ###
-##################################################################################################################################################
-
-
-
-
-##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
 ##################################################################################################################################################
-FROM ghcr.io/ublue-os/bazzite-nvidia-open:testing
+FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable
 
-# :::::: disable countme ( we always disable it anyway, so this  is to save us time. you can enable it if you want... ) :::::: 
+# :::::: disable countme ( sorry, but I prefer my telemetry opt-in. ) :::::: 
 RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
 
-# :::::: force distrobox to use a sub-directory for home :::::: 
+# :::::: tells distrobox use a sub-directory for /home :::::: 
 RUN mkdir -p /usr/share/distrobox/
 RUN touch /usr/share/distrobox/distrobox.conf
 RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
@@ -60,12 +53,13 @@ RUN TMPDIR="$(mktemp -d)" && \
   RUN dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
   RUN dnf5 -y install --allowerasing scx-scheds scx-tools scxctl cachyos-settings uksmd scx-manager
   RUN dnf5 -y copr disable bieszczaders/kernel-cachyos-addons
+
 # Set vm.max_map_count for stability/improved gaming performance
 # https://wiki.archlinux.org/title/Gaming#Increase_vm.max_map_count
   RUN echo -e "vm.max_map_count = 2147483642" > /etc/sysctl.d/80-gamecompatibility.conf
   #RUN echo "vm.swappiness=10" >> /etc/sysctl.conf
-# found it somewhere... seems legit.
-  RUN echo "kernel.sched_migration_cost_ns=5000000" >> /etc/sysctl.d/80-gamecompatibility.conf
+# found it somewhere... seems legit:
+  #RUN echo "kernel.sched_migration_cost_ns=5000000" >> /etc/sysctl.d/80-gamecompatibility.conf
 
 # :::::: install additional stuff :::::: 
 RUN dnf5 -y install --allowerasing install python3-pygame
@@ -82,20 +76,15 @@ COPY build_files/sign-kernel.sh /tmp/sign-kernel.sh
 RUN chmod +x /tmp/sign-kernel.sh && /tmp/sign-kernel.sh 
 
 # :::::: refresh akmods so that nvidia drivers actually catch... :::::: 
-# do not move this segment!
+# do not relocate this segment!
 RUN dnf5 -y install --allowerasing install rpmdevtools akmods
 
 # :::::: slot the kernel into place :::::: 
-#RUN mkdir -p /var/tmp
-
-
-RUN sed -i 's|^HOME=.*|HOME=/var/home|' "/etc/default/useradd" && \
-    rm -rf /boot /home /root /usr/local /srv /opt /mnt /var /usr/lib/sysimage/log /usr/lib/sysimage/cache/pacman/pkg && \
-    mkdir -p /sysroot /boot /usr/lib/ostree /var && \
-    ln -sT sysroot/ostree /ostree && ln -sT var/roothome /root && ln -sT var/srv /srv && ln -sT var/opt /opt && ln -sT var/mnt /mnt && ln -sT var/home /home && ln -sT ../var/usrlocal /usr/local && \
-    echo "$(for dir in opt home srv mnt usrlocal ; do echo "d /var/$dir 0755 root root -" ; done)" | tee -a "/usr/lib/tmpfiles.d/bootc-base-dirs.conf" && \
-    printf "d /var/roothome 0700 root root -\nd /run/media 0755 root root -" | tee -a "/usr/lib/tmpfiles.d/bootc-base-dirs.conf" && \
-    printf '[composefs]\nenabled = yes\n[sysroot]\nreadonly = true\n' | tee "/usr/lib/ostree/prepare-root.conf"
+RUN mkdir -p /var/tmp
+RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf && \
+      printf 'hostonly=no\nadd_dracutmodules+=" ostree bootc "' | tee /usr/lib/dracut/dracut.conf.d/30-bootcrew-bootc-modules.conf && \
+      sh -c 'export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" && \
+      dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION"  "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"'
 
 #  :::::: finish :::::: 
 RUN rm -rf /usr/etc
