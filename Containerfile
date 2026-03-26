@@ -65,6 +65,8 @@ RUN TMPDIR="$(mktemp -d)" && \
 RUN dnf5 -y install --allowerasing install python3-pygame
 RUN dnf5 -y install --allowerasing tlp
 RUN dnf5 -y install --allowerasing zcfan
+RUN systemctl enable tlp.service
+
 
 # :::::: SecureBoot stuff :::::: 
 RUN dnf5 -y install --allowerasing mokutil sbsigntools
