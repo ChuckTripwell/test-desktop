@@ -87,4 +87,6 @@ RUN printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/
 
 #  :::::: finish :::::: 
 #ENV DRACUT_NO_XATTR=1
+RUN rm -rf /usr/etc
+LABEL containers.bootc 1
 RUN bootc container lint
