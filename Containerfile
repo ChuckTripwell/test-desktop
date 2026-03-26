@@ -10,8 +10,10 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
   RUN pacman -S --noconfirm linux-cachyos-rc-nvidia-open linux-cachyos-rc-headers
 
 ##################################################################################################################################################
-### :::::: pull ublue-os :::::: ###
+### :::::: pull os :::::: ###
 ##################################################################################################################################################
+
+FROM ghcr.io/bootcrew/opensuse-bootc:latest
 
 # :::::: forcefully remove and replace kernel :::::: 
 RUN rm -rf /lib/modules/*
