@@ -21,7 +21,7 @@ COPY --from=cachyos /lib/modules /lib/modules
 COPY --from=cachyos /usr/share/licenses /usr/share/licenses
 
 # :::::: SecureBoot stuff :::::: 
-RUN dnf5 -y install --allowerasing mokutil sbsigntools
+RUN zypper install -y mokutil sbsigntools
 RUN mkdir -p /usr/share/cert
 RUN mkdir -p /tmp/cert
 COPY MOK.priv /tmp/cert/MOK.priv
