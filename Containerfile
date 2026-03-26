@@ -62,10 +62,11 @@ RUN TMPDIR="$(mktemp -d)" && \
   #RUN echo "kernel.sched_migration_cost_ns=5000000" >> /etc/sysctl.d/80-gamecompatibility.conf
 
 # :::::: install additional stuff :::::: 
-RUN dnf5 -y install --allowerasing install python3-pygame
+RUN dnf5 -y install --allowerasing python3-pygame
+RUN dnf5 -y install --allowerasing rust-libbz2-rs-sys-devel
 RUN dnf5 -y install --allowerasing tlp
+  RUN systemctl enable tlp.service
 RUN dnf5 -y install --allowerasing zcfan
-RUN systemctl enable tlp.service
 
 
 # :::::: SecureBoot stuff :::::: 
