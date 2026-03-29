@@ -12,15 +12,15 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
 ##################################################################################################################################################
-FROM ghcr.io/ublue-os/bazzite-nvidia-open:testing
+FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable
 
 # :::::: disable countme ( sorry, but I prefer my telemetry opt-in. ) :::::: 
 RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
 
 # :::::: tells distrobox use a sub-directory for /home :::::: 
-#RUN mkdir -p /usr/share/distrobox/
-#RUN touch /usr/share/distrobox/distrobox.conf
-#RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
+RUN mkdir -p /usr/share/distrobox/
+RUN touch /usr/share/distrobox/distrobox.conf
+RUN echo "DBX_CONTAINER_HOME_PREFIX=~/distrobox" >> /usr/share/distrobox/distrobox.conf
 
 # :::::: forcefully remove and replace kernel :::::: 
 RUN rm -rf /lib/modules/*
