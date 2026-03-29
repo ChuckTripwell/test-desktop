@@ -12,7 +12,7 @@ FROM docker.io/cachyos/cachyos-v3:latest AS cachyos
 ##################################################################################################################################################
 ### :::::: pull ublue-os :::::: ###
 ##################################################################################################################################################
-FROM ghcr.io/ublue-os/bazzite-nvidia-open:stable
+FROM ghcr.io/ublue-os/bazzite-nvidia-open:testing
 
 # :::::: disable countme ( sorry, but I prefer my telemetry opt-in. ) :::::: 
 RUN sed -i -e s,countme=1,countme=0, /etc/yum.repos.d/*.repo && systemctl mask --now rpm-ostree-countme.timer
